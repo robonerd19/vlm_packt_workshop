@@ -1,0 +1,48 @@
+# Inspection route in Gazebo world coordinates (Spot spawns at 0,0 facing +x).
+# yaw is in degrees: 90 faces the north side of the aisle, -90 the south side.
+#
+# Each station asks the VLM one short question; the inspector decides the verdict:
+#   max_value: anomaly if the number in the answer is above this limit
+#   anomaly_if: anomaly if the yes/no answer equals this word
+#   zoom: optional centre-crop factor applied before asking (small assets like gauges)
+# The small model says "yes" too easily when asked "is something wrong?", so each
+# question was checked against a fault-free control frame (see README).
+stations:
+  - name: S1 boiler feed pressure gauge
+    x: 4.0
+    y: 0.0
+    yaw: 90
+    question: Read the pressure gauge in bar. Reply with only the number the needle points to.
+    max_value: 6.0
+    zoom: 2
+  - name: S2 cooling loop pressure gauge
+    x: 8.0
+    y: 0.0
+    yaw: -90
+    question: Read the pressure gauge in bar. Reply with only the number the needle points to.
+    max_value: 6.0
+    zoom: 2
+  - name: S3 pipe flange and floor
+    x: 12.0
+    y: 0.0
+    yaw: 90
+    question: Is there a blue puddle on the floor? Answer yes or no.
+    anomaly_if: 'yes'
+  - name: S4 fire extinguisher point
+    x: 16.0
+    y: 0.0
+    yaw: -90
+    question: Is there a red cylinder below the sign? Answer yes or no.
+    anomaly_if: 'no'
+  - name: S5 electrical cabinet
+    x: 20.0
+    y: 0.0
+    yaw: 90
+    question: Is the electrical cabinet door open? Answer yes or no.
+    anomaly_if: 'yes'
+  - name: S6 emergency exit
+    x: 23.5
+    y: 0.0
+    yaw: 0
+    question: Are boxes blocking the door? Answer yes or no.
+    anomaly_if: 'yes'

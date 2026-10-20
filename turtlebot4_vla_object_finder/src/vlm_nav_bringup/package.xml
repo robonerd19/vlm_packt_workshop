@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<package format="3"><name>vlm_nav_bringup</name><version>0.1.0</version>
+<description>CPU-only RGB-D VLM navigation workshop: vlm_nav_bringup</description>
+<maintainer email="maintainer@example.com">Workshop maintainers</maintainer><license>Apache-2.0</license>
+<buildtool_depend>ament_python</buildtool_depend>
+<exec_depend>launch</exec_depend><exec_depend>launch_ros</exec_depend><exec_depend>ament_index_python</exec_depend><exec_depend>vlm_nav</exec_depend><exec_depend>vlm_nav_web</exec_depend><exec_depend>vlm_nav_demo</exec_depend><exec_depend>vlm_nav_sim</exec_depend><exec_depend>nav2_bringup</exec_depend>
+<export><build_type>ament_python</build_type></export></package>

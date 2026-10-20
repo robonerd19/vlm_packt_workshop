@@ -1,0 +1,52 @@
+[
+  {
+    "url": "https://fuel.gazebosim.org/1.0/OpenRobotics/models/Warehouse",
+    "version": "5",
+    "model_sdf_sha256": "8a2a1e3cf36d53d676841455c3d244a616230a584f81f6327542063c32973c24"
+  },
+  {
+    "url": "https://fuel.gazebosim.org/1.0/MovAi/models/shelf_big",
+    "version": "2",
+    "model_sdf_sha256": "0fb3e7441418919d3feb561f33b6d1088c862f9bc4b095e1313bdc5bfe9e49d7"
+  },
+  {
+    "url": "https://fuel.gazebosim.org/1.0/MovAi/models/shelf",
+    "version": "1",
+    "model_sdf_sha256": "5bd74fe8bda9f9e200150713338385b9b0a7e0d087ab82c48e3ae51c869b69ec"
+  },
+  {
+    "url": "https://fuel.gazebosim.org/1.0/OpenRobotics/models/Jersey Barrier",
+    "version": "6",
+    "model_sdf_sha256": "8ca20acc01547394d9f0a3e5c914c85d3f257a3e809f7e5de35eb2fdb72ed31c"
+  },
+  {
+    "url": "https://fuel.gazebosim.org/1.0/OpenRobotics/models/Chair",
+    "version": "3",
+    "model_sdf_sha256": "81d55695df13fbc7475bfc2ed48d1632e64faacf80683d41a3e92627c1b3dbc9"
+  },
+  {
+    "url": "https://fuel.gazebosim.org/1.0/OpenRobotics/models/foldable_chair",
+    "version": "3",
+    "model_sdf_sha256": "aee1f51c36c70511283b0357d3b396c95edb024c0019f1c1cf0be40fe5dc04dd"
+  },
+  {
+    "url": "https://fuel.gazebosim.org/1.0/OpenRobotics/models/CoffeeTable",
+    "version": "2",
+    "model_sdf_sha256": "3e71b1d921ef86691b3516bb543efed64a52f50b2f6ef00e31ffc2ba7d62eef9"
+  },
+  {
+    "url": "https://fuel.gazebosim.org/1.0/OpenRobotics/models/FemaleVisitorSit",
+    "version": "2",
+    "model_sdf_sha256": "dbfe4269f8b1dfd6d0a39879ad1cfa8911fa112f8f971f8886efb9fbce8ea2dd"
+  },
+  {
+    "url": "https://fuel.gazebosim.org/1.0/OpenRobotics/models/MaleVisitorOnPhone",
+    "version": "2",
+    "model_sdf_sha256": "c2da242d84552b6383e084a4022bfe14ba9561fbf3f80f789249ecf3a8329447"
+  },
+  {
+    "url": "https://fuel.gazebosim.org/1.0/plateau/models/Casual female",
+    "version": "1",
+    "model_sdf_sha256": "70a3a24f3b80f6bbd780a05a5a2c10d974e2928bbc50427bb54fcbb000b05222"
+  }
+]

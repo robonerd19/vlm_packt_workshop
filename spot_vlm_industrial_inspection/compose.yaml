@@ -1,0 +1,61 @@
+# Inference reuses the llama.cpp image and Qwen2-VL model files from ../turtlebot4_vla_object_finder.
+x-ros: &ros
+  image: spot-inspection-ros:local
+  build: .
+  network_mode: host
+  ipc: host
+  init: true
+  environment: &ros-env
+    ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-91}
+    RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+    FASTDDS_BUILTIN_TRANSPORTS: UDPv4
+
+services:
+  inference:
+    image: vlm-workshop-inference:local
+    build:
+      context: ../turtlebot4_vla_object_finder
+      dockerfile: docker/inference.Dockerfile
+    network_mode: host
+    init: true
+    volumes:
+      - ${MODEL_DIR:-../turtlebot4_vla_object_finder/models}:/models:ro
+    environment:
+      CPU_THREADS: ${CPU_THREADS:-8}
+      GPU_LAYERS: ${GPU_LAYERS:-999}
+    command: [cpu]
+    healthcheck:
+      test: [CMD, curl, -fsS, 'http://127.0.0.1:8081/health']
+      interval: 5s
+      timeout: 3s
+      start_period: 120s
+      retries: 24
+
+  simulation:
+    <<: *ros
+    shm_size: 1gb
+    environment:
+      <<: *ros-env
+      DISPLAY: ${DISPLAY:-:0}
+      XAUTHORITY: /tmp/spot.xauthority
+      QT_QPA_PLATFORM: xcb
+      LIBGL_ALWAYS_SOFTWARE: ${LIBGL_ALWAYS_SOFTWARE:-1}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ${HOST_XAUTHORITY:-/dev/null}:/tmp/spot.xauthority:ro
+    command: [bash, -lc, 'source /spot_ws/install/setup.bash && ros2 launch spot_inspection_sim sim.launch.py']
+
+  inspector:
+    <<: *ros
+    profiles: [inspect]
+    user: ${HOST_UID:-1000}:${HOST_GID:-1000}  # reports belong to the host user, not root
+    environment:
+      <<: *ros-env
+      HOME: /tmp
+      ROS_LOG_DIR: /tmp/ros_logs
+    depends_on:
+      inference:
+        condition: service_healthy
+    volumes:
+      - ./reports:/reports
+    command: [bash, -lc, 'source /spot_ws/install/setup.bash && ros2 launch spot_inspection inspection.launch.py report_dir:=/reports']

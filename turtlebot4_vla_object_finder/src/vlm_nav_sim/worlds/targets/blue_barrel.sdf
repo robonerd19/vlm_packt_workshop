@@ -1,0 +1,141 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.9">
+  <model name="demo_blue_barrel">
+    <static>true</static>
+    <pose>0.4 -1.85 0 0 0 0</pose>
+    <link name="body">
+      <collision name="drum">
+        <pose>0 0 0.44 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.28</radius>
+            <length>0.88</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="drum">
+        <pose>0 0 0.44 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.28</radius>
+            <length>0.88</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.025 0.15 0.85 1</ambient>
+          <diffuse>0.025 0.15 0.85 1</diffuse>
+        </material>
+      </visual>
+      <collision name="ring_0">
+        <pose>0 0 0.05 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.287</radius>
+            <length>0.035</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="ring_0">
+        <pose>0 0 0.05 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.287</radius>
+            <length>0.035</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.08 0.08 0.08 1</ambient>
+          <diffuse>0.08 0.08 0.08 1</diffuse>
+        </material>
+      </visual>
+      <collision name="ring_1">
+        <pose>0 0 0.3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.287</radius>
+            <length>0.035</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="ring_1">
+        <pose>0 0 0.3 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.287</radius>
+            <length>0.035</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.08 0.08 0.08 1</ambient>
+          <diffuse>0.08 0.08 0.08 1</diffuse>
+        </material>
+      </visual>
+      <collision name="ring_2">
+        <pose>0 0 0.61 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.287</radius>
+            <length>0.035</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="ring_2">
+        <pose>0 0 0.61 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.287</radius>
+            <length>0.035</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.08 0.08 0.08 1</ambient>
+          <diffuse>0.08 0.08 0.08 1</diffuse>
+        </material>
+      </visual>
+      <collision name="ring_3">
+        <pose>0 0 0.85 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.287</radius>
+            <length>0.035</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="ring_3">
+        <pose>0 0 0.85 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.287</radius>
+            <length>0.035</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.08 0.08 0.08 1</ambient>
+          <diffuse>0.08 0.08 0.08 1</diffuse>
+        </material>
+      </visual>
+      <collision name="lid">
+        <pose>0 0 0.888 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.275</radius>
+            <length>0.016</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name="lid">
+        <pose>0 0 0.888 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.275</radius>
+            <length>0.016</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.025 0.15 0.85 1</ambient>
+          <diffuse>0.025 0.15 0.85 1</diffuse>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

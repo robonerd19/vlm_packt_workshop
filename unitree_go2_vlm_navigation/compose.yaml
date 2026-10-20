@@ -1,0 +1,41 @@
+services:
+  go2-simulation:
+    image: unitree-go2-sim:jazzy
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    network_mode: host
+    ipc: host
+    shm_size: 1gb
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      XAUTHORITY: /tmp/go2.xauthority
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-89}
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      FASTDDS_BUILTIN_TRANSPORTS: UDPv4
+      QT_X11_NO_MITSHM: '1'
+      QT_QPA_PLATFORM: xcb
+      LIBGL_ALWAYS_SOFTWARE: ${LIBGL_ALWAYS_SOFTWARE:-1}
+      GALLIUM_DRIVER: ${GALLIUM_DRIVER:-llvmpipe}
+      GO2_DISABLE_D455: ${GO2_DISABLE_D455:-true}
+      GO2_DISABLE_LIDAR_L1: ${GO2_DISABLE_LIDAR_L1:-true}
+      GO2_DISABLE_VELODYNE: ${GO2_DISABLE_VELODYNE:-true}
+      GO2_WORLD: ${GO2_WORLD:-/go2_ws/install/unitree_go2_description/share/unitree_go2_description/worlds/default.sdf}
+      GO2_SPAWN_Z: ${GO2_SPAWN_Z:-0.375}
+      GO2_PUBLISH_MAP_TO_ODOM: ${GO2_PUBLISH_MAP_TO_ODOM:-true}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ${HOST_XAUTHORITY:-/dev/null}:/tmp/go2.xauthority:ro
+    command:
+      - bash
+      - -lc
+      - >-
+        source /go2_ws/install/setup.bash &&
+        ros2 launch unitree_go2_sim unitree_go2_launch.py rviz:=false
+        world:=${GO2_WORLD:-/go2_ws/install/unitree_go2_description/share/unitree_go2_description/worlds/default.sdf}
+        world_init_z:=${GO2_SPAWN_Z:-0.375}
+        publish_map_to_odom:=${GO2_PUBLISH_MAP_TO_ODOM:-true}
+        disable_d455:=${GO2_DISABLE_D455:-true}
+        disable_lidar_l1:=${GO2_DISABLE_LIDAR_L1:-true}
+        disable_velodyne_lidar:=${GO2_DISABLE_VELODYNE:-true}

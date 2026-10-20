@@ -1,0 +1,6 @@
+services:
+  go2-simulation:
+    command:
+      - bash
+      - -lc
+      - source /go2_ws/install/setup.bash && exec sleep infinity

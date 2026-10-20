@@ -1,0 +1,17 @@
+services:
+  go2-simulation:
+    environment:
+      LIBGL_ALWAYS_SOFTWARE: '0'
+      GALLIUM_DRIVER: ''
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: all
+      GO2_DISABLE_D455: 'false'
+      GO2_DISABLE_LIDAR_L1: 'false'
+      GO2_DISABLE_VELODYNE: 'false'
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

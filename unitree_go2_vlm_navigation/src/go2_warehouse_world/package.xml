@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>go2_warehouse_world</name>
+  <version>1.0.0</version>
+  <description>AWS RoboMaker Small Warehouse world and local model assets for the Unitree Go2 Gazebo simulation.</description>
+  <maintainer email="maintainers@example.org">Unitree Go2 VLM Navigation maintainers</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.9">
+  <model name="demo_red_chair">
+    <static>true</static>
+    <pose>-0.2 0.45 0 0 0 0.6</pose>
+    <link name="body">
+      <collision name="seat">
+        <pose>0 0 0.47 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.55 0.55 0.1</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="seat">
+        <pose>0 0 0.47 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.55 0.55 0.1</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.85 0.025 0.025 1</ambient>
+          <diffuse>0.85 0.025 0.025 1</diffuse>
+        </material>
+      </visual>
+      <collision name="back">
+        <pose>0.23 0 0.79 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.09 0.55 0.6</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="back">
+        <pose>0.23 0 0.79 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.09 0.55 0.6</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.85 0.025 0.025 1</ambient>
+          <diffuse>0.85 0.025 0.025 1</diffuse>
+        </material>
+      </visual>
+      <collision name="leg_0">
+        <pose>-0.2 -0.2 0.21 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.065 0.065 0.42</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="leg_0">
+        <pose>-0.2 -0.2 0.21 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.065 0.065 0.42</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.08 0.08 0.08 1</ambient>
+          <diffuse>0.08 0.08 0.08 1</diffuse>
+        </material>
+      </visual>
+      <collision name="leg_1">
+        <pose>-0.2 0.2 0.21 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.065 0.065 0.42</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="leg_1">
+        <pose>-0.2 0.2 0.21 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.065 0.065 0.42</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.08 0.08 0.08 1</ambient>
+          <diffuse>0.08 0.08 0.08 1</diffuse>
+        </material>
+      </visual>
+      <collision name="leg_2">
+        <pose>0.2 -0.2 0.21 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.065 0.065 0.42</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="leg_2">
+        <pose>0.2 -0.2 0.21 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.065 0.065 0.42</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.08 0.08 0.08 1</ambient>
+          <diffuse>0.08 0.08 0.08 1</diffuse>
+        </material>
+      </visual>
+      <collision name="leg_3">
+        <pose>0.2 0.2 0.21 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.065 0.065 0.42</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name="leg_3">
+        <pose>0.2 0.2 0.21 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.065 0.065 0.42</size>
+          </box>
+        </geometry>
+        <material>
+          <ambient>0.08 0.08 0.08 1</ambient>
+          <diffuse>0.08 0.08 0.08 1</diffuse>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

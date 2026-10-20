@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VLM Pick and Place</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0 auto;max-width:900px;padding:16px;background:#f6f6f4;color:#222}
+form{display:flex;gap:8px}input{flex:1;padding:8px;font-size:16px}button{padding:8px 16px;font-size:16px}
+img{width:100%;max-width:640px;border:1px solid #ccc;background:#ddd}
+#log{background:#fff;border:1px solid #ccc;padding:8px;height:260px;overflow:auto;font:13px monospace;white-space:pre-wrap}
+.row{display:flex;gap:16px;flex-wrap:wrap}.row>*{flex:1;min-width:280px}
+</style></head><body>
+<h1>VLM Pick and Place</h1>
+<p id="status">Connecting…</p>
+<form id="f"><input id="i" maxlength="200" value="put the red cube on the yellow tray" aria-label="Instruction">
+<button id="b">Run</button></form>
+<div class="row"><div><h2>Live camera</h2><img id="img" alt="Overhead camera">
+<h2>Last VLM detection</h2><img id="det" alt="VLM pick (yellow) and place (magenta) boxes"></div>
+<div><h2>Scene</h2><p id="objects">–</p><p id="plan"></p><h2>Log</h2><div id="log"></div></div></div>
+<script>
+const $=id=>document.getElementById(id);
+$('f').onsubmit=async e=>{e.preventDefault();
+  const r=await fetch('/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({instruction:$('i').value})});
+  if(!r.ok)alert((await r.json()).error);};
+async function poll(){try{const s=await (await fetch('/status')).json();
+  $('status').textContent=s.busy?'Working…':s.ready?'Ready':'Waiting for robot, camera and VLM…';
+  $('b').disabled=s.busy||!s.ready;
+  $('objects').textContent=s.objects.length?s.objects.join(', '):'–';
+  $('plan').textContent=s.plan?`Pick: ${s.plan.pick} → Place on: ${s.plan.place}`:'';
+  $('log').textContent=s.log.join('\n');$('log').scrollTop=1e9;
+  $('img').src='/image.jpg?'+Date.now();
+  if(s.plan&&!s.busy)$('det').src='/detection.jpg?'+s.log.length;}catch(e){$('status').textContent='Disconnected';}
+  setTimeout(poll,1000);}
+poll();
+</script></body></html>

@@ -1,0 +1,74 @@
+[
+  {
+    "station": "S1 boiler feed pressure gauge",
+    "x": 4.0,
+    "y": 0.0,
+    "image": "station_1.jpg",
+    "question": "Read the pressure gauge in bar. Reply with only the number the needle points to.",
+    "answer": "9",
+    "value": 9.0,
+    "anomaly": true,
+    "finding": "A gauge on a wall shows the pressure of a boiler feed.",
+    "inference_s": 2.0
+  },
+  {
+    "station": "S2 cooling loop pressure gauge",
+    "x": 8.0,
+    "y": 0.0,
+    "image": "station_2.jpg",
+    "question": "Read the pressure gauge in bar. Reply with only the number the needle points to.",
+    "answer": "4",
+    "value": 4.0,
+    "anomaly": false,
+    "finding": "A gauge with a red needle pointing to 7 bar.",
+    "inference_s": 1.9
+  },
+  {
+    "station": "S3 pipe flange and floor",
+    "x": 12.0,
+    "y": 0.0,
+    "image": "station_3.jpg",
+    "question": "Is there a blue puddle on the floor? Answer yes or no.",
+    "answer": "Yes.",
+    "value": "yes",
+    "anomaly": true,
+    "finding": "A blue stick is in front of a green pipe with a white ring on it.",
+    "inference_s": 1.2
+  },
+  {
+    "station": "S4 fire extinguisher point",
+    "x": 16.0,
+    "y": 0.0,
+    "image": "station_4.jpg",
+    "question": "Is there a red cylinder below the sign? Answer yes or no.",
+    "answer": "No",
+    "value": "no",
+    "anomaly": true,
+    "finding": "A fire extinguisher sign is mounted on a wall.",
+    "inference_s": 1.0
+  },
+  {
+    "station": "S5 electrical cabinet",
+    "x": 20.0,
+    "y": 0.0,
+    "image": "station_5.jpg",
+    "question": "Is the electrical cabinet door open? Answer yes or no.",
+    "answer": "Yes.",
+    "value": "yes",
+    "anomaly": true,
+    "finding": "A high voltage warning sign is on a wall with three colored bars.",
+    "inference_s": 1.1
+  },
+  {
+    "station": "S6 emergency exit",
+    "x": 23.5,
+    "y": 0.0,
+    "image": "station_6.jpg",
+    "question": "Are boxes blocking the door? Answer yes or no.",
+    "answer": "Yes.",
+    "value": "yes",
+    "anomaly": true,
+    "finding": "A green sign with the word \"EXIT\" on it is above a doorway.",
+    "inference_s": 1.1
+  }
+]

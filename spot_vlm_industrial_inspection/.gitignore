@@ -1,0 +1,15 @@
+# Model weights are downloaded by each project's setup script
+*.gguf
+models/
+# colcon output
+build/
+install/
+log/
+# Runtime output and local config
+reports/
+artifacts/
+.env
+.vscode/
+__pycache__/
+*.pyc
+.pytest_cache/

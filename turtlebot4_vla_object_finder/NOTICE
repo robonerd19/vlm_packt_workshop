@@ -1,0 +1,16 @@
+CPU-only VLM navigation workshop
+The application workflow and VlmNavigate interface are adapted from
+metanav/VLM_ROS_2_Dragonwing_IQ-9075 (Apache-2.0), commit
+96840e2c8bbc724f12d279e55362bbfd981dbdf9.
+Nav2 configuration is adapted from nav2_bringup (Apache-2.0).
+Model weights and llama.cpp retain their own licenses.
+
+The TurtleBot 4 warehouse layout, navigation map, and robot description come
+from the official Jazzy turtlebot4_simulator, turtlebot4, and iRobot Create3
+packages (Apache-2.0). Their copyright and installed package license files
+remain in the Docker image. The warehouse's Fuel models retain their own
+authors, model.config metadata, and licenses; they are not relicensed by this
+project. Original resource URLs and pinned versions are recorded in
+scripts/warehouse_assets.lock.json. Runtime preparation reduces sensor rates,
+keeps OAK-D/RPLIDAR, resolves resources locally, and substitutes a Gazebo
+differential-drive plugin for the Create3 hardware/docking stack.

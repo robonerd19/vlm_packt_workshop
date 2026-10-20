@@ -1,0 +1,13 @@
+vlm_navigator:
+  ros__parameters:
+    inference_url: http://127.0.0.1:8081
+    require_lifecycle: false
+    image_width: 320
+    approach_distance: 1.0
+    search_headings: 4
+    search_locations: 1
+    inference_timeout: 5.0
+    search_timeout: 90.0
+vlm_web:
+  ros__parameters:
+    request_timeout: 300.0

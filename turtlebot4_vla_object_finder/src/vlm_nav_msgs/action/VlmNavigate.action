@@ -1,0 +1,11 @@
+string prompt
+int32 max_new_tokens
+---
+bool success
+string nav_intent
+string description
+string full_vlm_response
+---
+string token
+string status
+float32 nav_distance_remaining

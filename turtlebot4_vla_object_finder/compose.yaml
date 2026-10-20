@@ -1,0 +1,81 @@
+x-ros: &ros
+  image: vlm-workshop-ros:local
+  build:
+    context: .
+    dockerfile: docker/ros.Dockerfile
+  network_mode: host
+  init: true
+  environment: &ros-env
+    ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-77}
+    RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+    FASTDDS_BUILTIN_TRANSPORTS: UDPv4
+  shm_size: 64m
+  stop_grace_period: 20s
+services:
+  mock:
+    <<: *ros
+    profiles: [mock]
+    mem_limit: 768m
+    command: [ros2, launch, vlm_nav_bringup, mock.launch.py, 'web_port:=${WEB_PORT:-8000}']
+    healthcheck:
+      test: [CMD, curl, -fsS, 'http://127.0.0.1:${WEB_PORT:-8000}/status']
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 5
+  inference:
+    image: vlm-workshop-inference:local
+    build:
+      context: .
+      dockerfile: docker/inference.Dockerfile
+    profiles: [simulation, external]
+    network_mode: host
+    init: true
+    mem_limit: ${INFERENCE_MEMORY:-3g}
+    memswap_limit: ${INFERENCE_MEMORY:-3g}
+    volumes:
+      - ${MODEL_DIR:-./models}:/models:ro
+    environment:
+      CPU_THREADS: ${CPU_THREADS:-4}
+      GPU_LAYERS: ${GPU_LAYERS:-999}
+    command: [cpu]
+    healthcheck:
+      test: [CMD, curl, -fsS, 'http://127.0.0.1:8081/health']
+      interval: 10s
+      timeout: 3s
+      start_period: 120s
+      retries: 12
+  simulation:
+    <<: *ros
+    profiles: [simulation]
+    mem_limit: ${SIMULATION_MEMORY:-1536m}
+    memswap_limit: ${SIMULATION_MEMORY:-1536m}
+    environment:
+      <<: *ros-env
+      SOFTWARE_RENDERING: '1'
+    command: [ros2, launch, vlm_nav_sim, sim.launch.py, 'scene:=${SIM_SCENE:-warehouse}']
+  application:
+    <<: *ros
+    profiles: [simulation]
+    mem_limit: ${APPLICATION_MEMORY:-768m}
+    memswap_limit: ${APPLICATION_MEMORY:-768m}
+    depends_on:
+      inference:
+        condition: service_healthy
+      simulation:
+        condition: service_started
+    command: [ros2, launch, vlm_nav_bringup, navigation.launch.py, 'scene:=${SIM_SCENE:-warehouse}', 'web_port:=${WEB_PORT:-8000}']
+    healthcheck:
+      test: [CMD, curl, -fsS, 'http://127.0.0.1:${WEB_PORT:-8000}/status']
+      interval: 10s
+      timeout: 3s
+      start_period: 60s
+      retries: 12
+  external:
+    <<: *ros
+    profiles: [external]
+    mem_limit: ${APPLICATION_MEMORY:-768m}
+    depends_on:
+      inference:
+        condition: service_healthy
+    command: [ros2, launch, vlm_nav_bringup, app.launch.py, 'use_sim_time:=false', 'web_port:=${WEB_PORT:-8000}']

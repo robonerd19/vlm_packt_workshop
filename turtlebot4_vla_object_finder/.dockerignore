@@ -1,0 +1,9 @@
+.git
+build
+install
+log
+models
+artifacts
+**/__pycache__
+**/*.pyc
+.env

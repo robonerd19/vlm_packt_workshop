@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>go2_warehouse_nav2</name>
+  <version>0.1.0</version>
+  <description>Warehouse 2D map and Nav2 configuration for the Unitree Go2 simulation.</description>
+  <maintainer email="maintainers@example.org">Go2 VLM Navigation maintainers</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>pointcloud_to_laserscan</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>
