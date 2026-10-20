@@ -1,0 +1,41 @@
+# Go2 warehouse: D455 RGB-D camera, Nav2 from go2_warehouse_nav2 (AMCL on the generated map).
+vlm_navigator:
+  ros__parameters:
+    inference_url: http://127.0.0.1:8081
+    inference_timeout: 120.0
+    color_topic: /d455/image
+    depth_topic: /d455/depth_image
+    info_topic: /d455/camera_info
+    camera_frame: d455_camera_depth_optical_frame
+    odom_topic: /odom
+    map_frame: map
+    base_frame: base_footprint
+    image_width: 320
+    max_new_tokens: 128
+    approach_distance: 1.2
+    nav_timeout: 240.0
+    verify_detection: true
+    search_enabled: true
+    search_map_enabled: true
+    search_headings: 12
+    search_rotation_delay: 2.0
+    search_locations: 3
+    search_spacing: 3.0
+    search_clearance: 0.45
+    search_timeout: 900.0
+    home_x: 0.0
+    home_y: 0.0
+    sensor_max_age: 2.0
+    lifecycle_nodes: [amcl, planner_server, controller_server, bt_navigator]
+    # "patrol": visit these map x, y pairs, turn through patrol_headings views at each,
+    # and remember every object the VLM places with depth as a labelled waypoint.
+    # Kept to the north half: AMCL drifted ~2 m in the long south aisle.
+    patrol_points: [0.0, 0.0, 0.5, 5.5, -3.5, 4.0, 0.5, -3.0]
+    patrol_headings: 6  # 60 deg steps overlap the 85 deg D455 view, so most objects are whole in one view
+    memory_merge_distance: 1.5
+vlm_web:
+  ros__parameters:
+    bind: 127.0.0.1
+    port: 8000
+    color_topic: /d455/image
+    request_timeout: 1200.0

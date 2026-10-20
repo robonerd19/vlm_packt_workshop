@@ -193,7 +193,115 @@ docker compose -p unitree-go2-vlm-navigation exec go2-simulation \
   bash -lc 'source /go2_ws/install/setup.bash && ros2 run nav2_map_server map_saver_cli -f /go2_ws/warehouse_slam_map'
 ```
 
-The packages provide baseline autonomous navigation and mapping; VLM-based
-object finding and goal selection are not included. See [UPSTREAM.md](UPSTREAM.md)
-for the robot source revision and its licensing notes.
+See [UPSTREAM.md](UPSTREAM.md) for the robot source revision and its licensing notes.
+
+## VLM object finding
+
+Type an instruction such as `go to the green dumpster` in a browser and the Go2
+finds it from patrol memory (below) or looks for the object with Qwen2-VL-2B in its D455 RGB-D camera, projects the
+detection into the map with depth and TF, and walks there with the Nav2 stack
+above. If the object is not in view it turns in place and then visits a few
+free-space viewpoints on the map; an object it cannot find is refused without
+moving to a goal.
+
+The pipeline is the TurtleBot 4 object finder from
+[`../turtlebot4_vla_object_finder`](../turtlebot4_vla_object_finder/), copied
+into `src/vlm_nav`, `src/vlm_nav_msgs`, and `src/vlm_nav_web`. Go2-specific
+settings are in `src/vlm_nav/config/go2_warehouse.yaml`: D455 topics
+(`/d455/image`, `/d455/depth_image`, `/d455/camera_info`), `map` and
+`base_footprint` frames, and `camera_frame: d455_camera_depth_optical_frame`.
+Gazebo stamps the D455 images with `d455_camera_link` (x forward), while the
+pixels follow the optical convention (z forward), so the navigator relabels
+them with the optical frame at the same origin. The model server reuses the
+TurtleBot project's llama.cpp images (`vlm-workshop-inference[-cuda]:local`,
+built from that project if missing) and its model files in
+`../turtlebot4_vla_object_finder/models` (download them there with
+`bash scripts/download_model.sh`, or set `MODEL_DIR`).
+
+Run each command in its own terminal, from this folder:
+
+```bash
+GO2_PUBLISH_MAP_TO_ODOM=false bash scripts/go2_sim.sh start gpu warehouse
+bash scripts/start_nav2.sh nav2
+bash scripts/start_vlm.sh gpu      # Qwen2-VL server on 8081, web UI on 8000
+```
+
+Open <http://127.0.0.1:8000>, wait for the status to show ready, and send an
+instruction. `go home` returns to the start pose. Ctrl+C in the `start_vlm.sh`
+terminal stops the navigator; `bash scripts/start_vlm.sh stop` also stops the
+model server, and `bash scripts/go2_sim.sh stop` stops everything. Ports 8000
+and 8081 are shared with the other workshop projects, so stop those first.
+
+### Patrol and object waypoints
+
+Send `patrol` to have the Go2 walk the `patrol_points` in
+`src/vlm_nav/config/go2_warehouse.yaml` with Nav2, turning through
+`patrol_headings` views at each point. For every view Qwen2-VL lists the objects
+it sees with boxes; depth and TF place each one in the map, and it is remembered
+as a labelled waypoint: the object position plus a viewing pose 1.2 m in front of
+it, which the robot reached on patrol. Waypoints appear under "Remembered
+objects" in the web UI (click one to fill in `go to the …`) and as
+`visualization_msgs/MarkerArray` on `/vlm_nav/objects` for RViz.
+
+After a patrol, `go to the <object>` first matches the instruction against the
+remembered labels and sends Nav2 straight to that waypoint's pose, with no
+searching. When nothing matches (a named color must appear in the remembered
+label), it falls back to the live search described above. Memory lasts until the
+navigator restarts. Boxes clipped by the image edge, floor markings, and walls
+are not stored.
+
+Measured in GPU mode (RTX 4060 Laptop GPU), four patrol points with six views each:
+
+| Instruction | Result | Time |
+|---|---|---|
+| `patrol` | 24 views, 12 objects remembered; the dumpster stored as "green bin" at (-1.05, 7.5), about 0.5 m from its model origin | 562 s |
+| `go to the green dumpster` | matched "green bin" from memory, walked to its waypoint, ended facing the dumpster | 58 s |
+| `go to the yellow metal rack` (earlier 4-view patrol) | matched "yellow metal racks", arrived 0.26 m from the stored pose | 27 s |
+| `go to the pallet truck` | wrong object: "pallet" matched the remembered "pallets" stack, not the pallet jack (stored as "forklift") | 29 s |
+| `go to the blue sofa` (earlier patrol) | no remembered match, live search refused it after 30 views | 536 s |
+
+Limits seen while testing: the 2B model sometimes names the same object
+differently ("green bin", "green truck") or invents labels for a box stack
+("forklift", "pallets"), so check the remembered list before demoing an object.
+With four views per point, the dumpster was clipped at the image edge and
+stored 2.9 m away inside a wall, which is why patrol now skips clipped boxes
+and uses six views. At temperature 0 the model can repeat one entry until its
+token limit; complete entries are still read from the truncated reply. AMCL
+drifted about 2 m in the long south aisle, so the patrol points stay in the
+north half.
+
+**CPU mode** has no depth camera by default. Enable the D455 and the Velodyne
+explicitly, and use CPU inference (each VLM answer then takes 45–60 s instead
+of about 1 s, and software rendering of the depth camera slows Gazebo further):
+
+```bash
+GO2_PUBLISH_MAP_TO_ODOM=false GO2_DISABLE_VELODYNE=false GO2_DISABLE_D455=false \
+  bash scripts/go2_sim.sh start cpu warehouse
+bash scripts/start_nav2.sh nav2
+bash scripts/start_vlm.sh cpu
+```
+
+The plain `/rgb_image` camera has no depth and is not used for object finding.
+CPU mode was not tested end to end; the GPU results below were.
+
+Measured in the warehouse world, GPU mode (RTX 4060 Laptop GPU), robot starting
+at the origin:
+
+| Instruction | Result | Time | Views | Robot end (Gazebo x, y) |
+|---|---|---|---|---|
+| `go to the green dumpster` (run 1) | arrived, dumpster in view | 128 s | 4 | (-0.44, 6.47) |
+| `go to the green dumpster` (run 2) | arrived | 54 s | 4 | (0.31, 7.31) |
+| `go to the blue sofa` | refused: not found in search time limit | 545 s | 30 (3 viewpoints) | no goal sent |
+
+The dumpster model origin is at (-1.59, 7.72); the robot stops `approach_distance`
+(1.2 m) short of the detected surface. Each VLM call takes about 1 s on the GPU;
+most of the time is the Go2 turning and walking between views (Gazebo runs below
+real time). Limits seen in testing: the 2B model's text-only identity check once
+accepted `blue sofa` for a green bin, so a named color that the candidate's
+label visibly lacks now rejects it before that check (`identity_matches` in
+`src/vlm_nav/vlm_nav/perception.py`, the one change to the TurtleBot logic
+besides `camera_frame`). AMCL can drift: after one `go home` the robot was
+about 1.6 m from the true origin. When the robot starts wedged next to a rack,
+the search can skip viewpoints it cannot reach and miss the target.
+
 # unitree_go2_vlm_navigation-

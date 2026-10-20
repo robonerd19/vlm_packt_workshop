@@ -81,7 +81,7 @@ case "$action" in
       export GO2_DISABLE_D455=false GO2_DISABLE_LIDAR_L1=false GO2_DISABLE_VELODYNE=false
     else
       export LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe
-      export GO2_DISABLE_D455=true GO2_DISABLE_LIDAR_L1=true
+      export GO2_DISABLE_D455="${GO2_DISABLE_D455:-true}" GO2_DISABLE_LIDAR_L1=true
       export GO2_DISABLE_VELODYNE="${GO2_DISABLE_VELODYNE:-true}"
     fi
     "${compose[@]}" up -d --build go2-simulation
@@ -90,6 +90,7 @@ case "$action" in
     ;;
   stop)
     docker compose -p "$project" -f compose.yaml down --remove-orphans
+    docker compose -p "$project-vlm" -f compose.vlm.yaml down --remove-orphans
     echo 'Go2 simulation stopped.'
     ;;
   status)

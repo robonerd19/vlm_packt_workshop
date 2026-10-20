@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ros-jazzy-joint-state-publisher-gui \
       ros-jazzy-teleop-twist-keyboard ros-jazzy-rqt-robot-steering \
       ros-jazzy-navigation2 ros-jazzy-nav2-bringup ros-jazzy-slam-toolbox \
-      ros-jazzy-pointcloud-to-laserscan \
+      ros-jazzy-pointcloud-to-laserscan python3-flask \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /go2_ws

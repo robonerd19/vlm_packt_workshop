@@ -1,0 +1,22 @@
+# Qwen2-VL-2B llama.cpp server for VLM object finding. Reuses the TurtleBot 4
+# project's inference images and model files; scripts/start_vlm.sh selects cpu/gpu.
+services:
+  inference:
+    image: vlm-workshop-inference:local
+    build:
+      context: ../turtlebot4_vla_object_finder
+      dockerfile: docker/inference.Dockerfile
+    network_mode: host
+    init: true
+    volumes:
+      - ${MODEL_DIR:-../turtlebot4_vla_object_finder/models}:/models:ro
+    environment:
+      CPU_THREADS: ${CPU_THREADS:-4}
+      GPU_LAYERS: ${GPU_LAYERS:-999}
+    command: [cpu]
+    healthcheck:
+      test: [CMD, curl, -fsS, 'http://127.0.0.1:8081/health']
+      interval: 10s
+      timeout: 3s
+      start_period: 120s
+      retries: 12

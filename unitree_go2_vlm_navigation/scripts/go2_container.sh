@@ -63,7 +63,7 @@ case "$action" in
       compose+=(-f compose.gpu.yaml)
     else
       export LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe
-      export GO2_DISABLE_D455=true GO2_DISABLE_LIDAR_L1=true
+      export GO2_DISABLE_D455="${GO2_DISABLE_D455:-true}" GO2_DISABLE_LIDAR_L1=true
       export GO2_DISABLE_VELODYNE="${GO2_DISABLE_VELODYNE:-true}"
     fi
     "${compose[@]}" up -d --build go2-simulation
