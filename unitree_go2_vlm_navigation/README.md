@@ -73,6 +73,16 @@ hardware specification, not a validated target for this fixed-cadence CHAMP
 simulation gait. Gazebo runs at roughly 0.55x real time on a laptop-class CPU,
 so on-screen motion looks about half as fast as the sim-time speed.
 
+The legs use position commands (`command_interface:=position`, matching
+`config/ros_control/ros_control.yaml`). Walking straight at a 0.5 m/s command in
+the warehouse, body roll/pitch rate RMS was about 12/15 deg/s with position
+commands versus 48-55/39-44 deg/s with the original effort PID (p 100, d 1), and
+roll stayed within about ±0.7° instead of ±2.8°. The trade-off: the robot reaches
+only about 0.3 m/s for a 0.5 m/s command, and Nav2 needed recovery behaviours
+near some goals (three test goals took 37-294 s versus 31-48 s with effort
+control). Launch with `command_interface:=effort` and set `command_interfaces`
+back to `effort` in that file to compare.
+
 `start` also builds the image if it is missing or needs rebuilding. CPU mode uses
 Mesa software rendering and disables the D455 depth camera and two 3D lidars to
 reduce load; it keeps the robot and RGB camera in Gazebo. GPU mode requires

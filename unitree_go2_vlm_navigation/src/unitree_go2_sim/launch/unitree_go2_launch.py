@@ -77,7 +77,8 @@ def generate_launch_description():
     )
     declare_command_interface = DeclareLaunchArgument(
         "command_interface",
-        default_value="effort",
+        # Must match command_interfaces in config/ros_control/ros_control.yaml.
+        default_value="position",
         description="ros2_control joint command interface: effort or position",
     )
     declare_disable_camera = DeclareLaunchArgument(

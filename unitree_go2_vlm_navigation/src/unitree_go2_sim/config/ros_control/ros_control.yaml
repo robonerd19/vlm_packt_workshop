@@ -33,8 +33,11 @@ joint_group_effort_controller:
         - rh_upper_leg_joint
         - rh_lower_leg_joint 
     
+    # Position commands: walking roll/pitch rate RMS fell from ~50 to ~14 deg/s
+    # versus effort PID (p100 d1), measured in the warehouse at 0.5 m/s command.
+    # The gains below apply only if this is switched back to effort.
     command_interfaces:
-      - effort
+      - position
     state_interfaces:
       - position
       - velocity
