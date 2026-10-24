@@ -1,6 +1,6 @@
-# Model weights are downloaded by each project's setup script
+# Model weights from the llama.cpp setup lived in <project>/models/; source model assets stay tracked
 *.gguf
-models/
+/*/models/
 # colcon output
 build/
 install/
