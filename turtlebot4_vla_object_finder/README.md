@@ -20,6 +20,9 @@ warehouse environment. The original small-room demo remains selectable. See
   Runtime uses baked warehouse resources and local model files.
 - Ports 8000 and 8081 available. These bind to localhost by default.
 
+Install Docker, Compose v2 and the NVIDIA Container Toolkit with
+[`scripts/install_prereqs.sh`](../scripts/install_prereqs.sh) from the repo root.
+
 Use one mode at a time: the services intentionally share localhost ports.
 Choose a distinct ROS domain if other ROS applications run on the host.
 The defaults use domain 77 and UDP DDS transport to avoid cross-container
@@ -33,7 +36,7 @@ checksum-verifies the model files, and builds the ROS and selected inference
 images. It uses Docker Compose v2 (`docker compose`).
 
 ```bash
-cd /home/robot/vlm_packt_workshop/turtlebot4_vla_object_finder
+cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
 
 # Choose one setup mode. Re-running setup reuses verified model files.
 bash scripts/workshop.sh setup cpu
@@ -55,7 +58,7 @@ background and checks that an inference request or robot motion is not active
 before switching devices:
 
 ```bash
-cd /home/robot/vlm_packt_workshop/turtlebot4_vla_object_finder
+cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
 
 # Start either mode
 bash scripts/workshop.sh start cpu
@@ -178,7 +181,7 @@ With the Docker simulation running, open a second terminal on the Linux
 desktop:
 
 ```bash
-cd /home/robot/vlm_packt_workshop/turtlebot4_vla_object_finder
+cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
 bash scripts/open_sim_gui.sh
 ```
 
@@ -208,7 +211,7 @@ a separate 768 MiB limit and adds CPU/RAM beyond the headless demo measurements.
 With the robot home and the standing person visible, run the complete real-model test:
 
 ```bash
-cd /home/robot/vlm_packt_workshop/turtlebot4_vla_object_finder
+cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
 python3 scripts/verify_demo.py --mode simulation --prompt 'go to the standing person'
 ```
 
@@ -277,7 +280,7 @@ exit
 ## Logs, shutdown, and rebuilding
 
 ```bash
-cd /home/robot/vlm_packt_workshop/turtlebot4_vla_object_finder
+cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
 
 # Recent logs from the three real-demo services.
 docker compose --profile simulation logs --tail 100 inference simulation application
@@ -314,7 +317,7 @@ localization, use the helper's `stop` followed by `start` while no request is ac
 Mock mode needs only the ROS image, with no model download or Gazebo:
 
 ```bash
-cd /home/robot/vlm_packt_workshop/turtlebot4_vla_object_finder
+cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
 if [ ! -f .env ]; then cp .env.example .env; fi
 
 # Release the ports used by any other workshop mode.
@@ -373,7 +376,7 @@ stack instead of launching this world:
 Complete the first-time Docker setup above, then run:
 
 ```bash
-cd /home/robot/vlm_packt_workshop/turtlebot4_vla_object_finder
+cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
 docker compose --profile mock --profile simulation --profile external down
 docker compose --profile external up -d
 docker compose --profile external ps

@@ -16,6 +16,9 @@ state-estimation nodes, and bridges the simulated sensors.
 - For GPU mode: a compatible NVIDIA driver and working Docker GPU support via
   NVIDIA Container Toolkit.
 
+Install Docker, Compose v2 and the NVIDIA Container Toolkit with
+[`scripts/install_prereqs.sh`](../scripts/install_prereqs.sh) from the repo root.
+
 ROS, Gazebo, CHAMP, and simulation dependencies are installed inside the image;
 the host does not need a ROS installation. The upstream checkout is pinned in
 [UPSTREAM.md](UPSTREAM.md).
@@ -313,5 +316,3 @@ label visibly lacks now rejects it before that check (`identity_matches` in
 besides `camera_frame`). AMCL can drift: after one `go home` the robot was
 about 1.6 m from the true origin. When the robot starts wedged next to a rack,
 the search can skip viewpoints it cannot reach and miss the target.
-
-# unitree_go2_vlm_navigation-

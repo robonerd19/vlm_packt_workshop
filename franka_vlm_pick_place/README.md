@@ -24,10 +24,21 @@ Gazebo Harmonic, and the same VLM files and inference images.
    Gazebo are too flaky for a workshop. Placing on an occupied tray stacks on top,
    because the nearest surface in the tray's box is then the cube.
 
+## Requirements
+
+- Ubuntu 24.04 desktop (X11 for the optional Gazebo window) with Docker Engine
+  and Compose v2.
+- About 20 GB free disk and internet for the first build and the 2.3 GB model.
+- GPU mode: NVIDIA driver + NVIDIA Container Toolkit. CPU mode works but each
+  VLM answer takes 45–60 s instead of about 1 s.
+
+Install Docker, Compose v2 and the NVIDIA Container Toolkit with
+[`scripts/install_prereqs.sh`](../scripts/install_prereqs.sh) from the repo root.
+
 ## Run
 
 ```bash
-cd /home/robot/vlm_packt_workshop/franka_vlm_pick_place
+cd ~/vlm_packt_workshop/franka_vlm_pick_place
 bash scripts/workshop.sh setup cpu   # or: setup gpu  (downloads 2.3 GB model, builds images)
 bash scripts/workshop.sh start cpu   # or: start gpu
 ```
