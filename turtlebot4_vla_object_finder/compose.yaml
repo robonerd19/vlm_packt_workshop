@@ -37,13 +37,24 @@ services:
       OLLAMA_HOST: 127.0.0.1:8081
       OLLAMA_KEEP_ALIVE: '-1'
       OLLAMA_NUM_PARALLEL: '1'
+      # With the default f16 K/V cache, qwen2.5vl on CUDA (Ollama 0.40.10/0.40.11) degenerated
+      # into "GGGG..." answers and stayed broken until restart; a q8_0 cache (needs flash attention) did not.
+      OLLAMA_FLASH_ATTENTION: '1'
+      OLLAMA_KV_CACHE_TYPE: q8_0
+    # First start pulls the model (3.2 GB) and names it "vlm", the name the code asks for.
+    # Loading it before reporting healthy: the first request to a cold model took minutes.
+    entrypoint: [/bin/sh, -c]
+    command:
+      - (until ollama list >/dev/null 2>&1; do sleep 1; done;
+         ollama show vlm >/dev/null 2>&1 || { ollama pull qwen2.5vl:3b && ollama cp qwen2.5vl:3b vlm; };
+         ollama run vlm 'Say ok.' >/dev/null) &
+        exec ollama serve
     healthcheck:
-      # "vlm" is the model alias created by scripts/workshop.sh setup.
-      test: [CMD, ollama, show, vlm]
+      test: [CMD-SHELL, ollama ps | grep -q '^vlm']
       interval: 10s
       timeout: 5s
-      start_period: 30s
-      retries: 12
+      start_period: 30m
+      retries: 3
   simulation:
     <<: *ros
     profiles: [simulation]
@@ -80,3 +91,4 @@ services:
     command: [ros2, launch, vlm_nav_bringup, app.launch.py, 'use_sim_time:=false', 'web_port:=${WEB_PORT:-8000}']
 volumes:
   ollama:
+    name: vlm-workshop-ollama  # shared by all four workshop projects

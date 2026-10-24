@@ -1,14 +1,6 @@
-# NVIDIA overlay: CUDA inference and GPU rendering for Gazebo.
+# NVIDIA overlay: GPU inference and GPU rendering for Gazebo.
 services:
   inference:
-    image: vlm-workshop-inference-cuda:local
-    build:
-      context: ../turtlebot4_vla_object_finder
-      dockerfile: docker/inference.cuda.Dockerfile
-      args:
-        CUDA_ARCHITECTURES: ${CUDA_ARCHITECTURES:-89}
-        BUILD_JOBS: ${GPU_BUILD_JOBS:-4}
-    command: [gpu]
     deploy:
       resources:
         reservations:

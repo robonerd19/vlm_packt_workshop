@@ -64,13 +64,6 @@ fi
 docker compose --profile simulation config -q
 
 "${compose[@]}" --profile simulation build simulation
-# Ollama keeps the model in the "ollama" volume; the application asks for it as "vlm".
-model=qwen2.5vl:3b
-"${compose[@]}" --profile simulation up -d --no-deps inference
-for _ in {1..30}; do
-  "${compose[@]}" exec -T inference ollama list >/dev/null 2>&1 && break
-  sleep 1
-done
-"${compose[@]}" exec -T inference ollama pull "$model"
-"${compose[@]}" exec -T inference ollama cp "$model" vlm
+echo 'Starting Ollama; the first run downloads qwen2.5vl:3b (3.2 GB). Progress: docker compose logs -f inference'
+"${compose[@]}" --profile simulation up -d --wait --no-deps inference
 echo "Setup complete for $device mode. Start it with: bash scripts/workshop.sh start $device"

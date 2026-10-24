@@ -1,12 +1,12 @@
 # Franka VLM pick and place — ROS 2 Jazzy + Gazebo
 
 Type an instruction such as *"put the red cube on the yellow tray"* in a local
-browser. A Franka Panda in Gazebo uses Qwen2-VL-2B (llama.cpp) to understand the
+browser. A Franka Panda in Gazebo uses Qwen2.5-VL-3B (served by Ollama) to understand the
 table scene, finds both objects in an overhead RGB-D camera, turns the boxes into
 3D points with depth, and does a top-down pick and place.
 
 Same stack as the TurtleBot 4 and Go2 workshops in this repo: Docker, ROS 2 Jazzy,
-Gazebo Harmonic, and the same VLM files and inference images.
+Gazebo Harmonic, and the same Ollama model service.
 
 ## Pipeline
 
@@ -28,7 +28,7 @@ Gazebo Harmonic, and the same VLM files and inference images.
 
 - Ubuntu 24.04 desktop (X11 for the optional Gazebo window) with Docker Engine
   and Compose v2.
-- About 20 GB free disk and internet for the first build and the 2.3 GB model.
+- About 20 GB free disk and internet for the first build and the 3.2 GB model.
 - GPU mode: NVIDIA driver + NVIDIA Container Toolkit. CPU mode works but each
   VLM answer takes 45–60 s instead of about 1 s.
 
@@ -39,7 +39,7 @@ Install Docker, Compose v2 and the NVIDIA Container Toolkit with
 
 ```bash
 cd ~/vlm_packt_workshop/franka_vlm_pick_place
-bash scripts/workshop.sh setup cpu   # or: setup gpu  (downloads 2.3 GB model, builds images)
+bash scripts/workshop.sh setup cpu   # or: setup gpu  (builds the ROS image, downloads the 3.2 GB model once)
 bash scripts/workshop.sh start cpu   # or: start gpu
 ```
 

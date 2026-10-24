@@ -151,12 +151,11 @@ localization. If a request is active or the robot is moving, use Cancel and wait
 for its terminal result before switching. The helper also stops the optional
 Gazebo GUI when you run its `stop` command.
 
-Qwen2.5-VL answers boxes in pixels of the image Ollama resizes it to (1008x756
-for a 4:3 frame, whatever size is sent), not in normalized coordinates. The
-client sends the 320x240 JPEG frame and converts the box from that size back to
-the camera image (`model_size` and `parse_box` in `vlm_nav/perception.py`).
-Sending a 1008x756 JPEG instead made Ollama 0.40.10 answer with empty text and
-fail every later request until `docker compose restart inference`.
+Qwen2.5-VL answers boxes in pixels of the image Ollama resizes it to, not in
+normalized coordinates: small frames are scaled up to at least 1024×28×28 pixels
+with sides in multiples of 28, so every 4:3 frame becomes 1036x784. The client
+converts boxes from that size back to the camera image (`model_size` and
+`parse_box` in `vlm_nav/perception.py`).
 
 Inspect the selected backend:
 

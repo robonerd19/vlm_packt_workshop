@@ -31,16 +31,20 @@ def require_complete_box(box, width, height):
         raise UnusableDetection('Detection touches the image boundary; another view is needed.')
 
 
-# Ollama resizes every image for Qwen2.5-VL and the model answers in pixels of
-# that resized image, whatever size was sent and even when asked for normalized
-# coordinates. Sending a 1008x756 JPEG instead made Ollama 0.40.10 return empty
-# answers until restart, so frames go at their small size and boxes are converted.
-MODEL_WIDTH = 1008
+# Ollama resizes each image for Qwen2.5-VL like Qwen's smart_resize: sides become
+# multiples of 28 and small images are scaled up to at least 1024*28*28 pixels. The
+# model answers in pixels of that resized image, whatever size was sent and even when
+# asked for normalized coordinates (measured on Ollama 0.40.10: a 4:3 frame -> 1036x784).
+FACTOR, MIN_PIXELS = 28, 1024 * 28 * 28
 
 
 def model_size(width, height):
-    # shortcut: measured for 4:3 frames (always 1008x756); re-measure for other aspect ratios.
-    return MODEL_WIDTH, max(28, round(MODEL_WIDTH * height / width / 28) * 28)
+    # shortcut: no max_pixels branch; frames above ~3.6 MP would need it.
+    w, h = round(width / FACTOR) * FACTOR, round(height / FACTOR) * FACTOR
+    if w * h < MIN_PIXELS:
+        beta = math.sqrt(MIN_PIXELS / (width * height))
+        w, h = math.ceil(width * beta / FACTOR) * FACTOR, math.ceil(height * beta / FACTOR) * FACTOR
+    return w, h
 
 
 def parse_box(text, width, height, sent=None):

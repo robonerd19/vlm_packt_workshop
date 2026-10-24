@@ -4,7 +4,7 @@
 |---|---|---|
 | `src/spot_description/` | <https://github.com/rai-opensource/spot_description> at `156d1802bfb117f219dbfce7597d283d5fabc968` | MIT (see its `LICENSE`) |
 | `upstream/champ*` | CHAMP, copied from `../unitree_go2_vlm_navigation/upstream/unitree_go2_ros2` (khaledgabr77/unitree_go2_ros2 at `55ff151632a0220bf3ae0c0772392615d86da7a8`) | BSD-3-Clause |
-| VLM inference image | `../turtlebot4_vla_object_finder/docker/inference*.Dockerfile` (llama.cpp, pinned commit there) | MIT |
+| VLM inference image | `ollama/ollama:0.40.10` (official image, pinned in `compose.yaml`) | MIT |
 
 ## Local patches
 

@@ -10,9 +10,9 @@ def test_box_coordinates_map_back_to_original_image():
 
 def test_ollama_pixel_box_scales_from_sent_size():
     # Real qwen2.5vl:3b answer for the standing person in the 320x240 home view.
-    assert model_size(320, 240) == (1008, 756)
-    x1, y1, x2, y2 = parse_box('{"found":true,"bbox_2d":[456,129,557,442]}', 320, 240, (1008, 756))
-    assert 140 < x1 < 150 and 36 < y1 < 46 and 172 < x2 < 182 and 135 < y2 < 145
+    assert model_size(320, 240) == model_size(640, 480) == model_size(1008, 756) == (1036, 784)
+    x1, y1, x2, y2 = parse_box('{"found":true,"bbox_2d":[456,129,557,442]}', 320, 240, (1036, 784))
+    assert 138 < x1 < 148 and 34 < y1 < 44 and 168 < x2 < 178 and 133 < y2 < 143
 
 
 @pytest.mark.parametrize('box',[[800,0,200,700],[-1,0,1000,700],[0,0,1009,700],[0,0,500,757],

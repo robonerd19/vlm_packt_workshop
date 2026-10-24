@@ -1,5 +1,11 @@
 # Runtime validation
 
+> **Inference backend changed.** This document describes the llama.cpp server with
+> Qwen2-VL-2B. The project now runs `qwen2.5vl:3b` in the official Ollama
+> container (see `compose.yaml` and the README); interfaces, search, and
+> navigation are unchanged, but model, latency, and memory figures here are for
+> the earlier backend.
+
 The default demo now uses TurtleBot 4 Standard in the official warehouse.
 The earlier small-room results below are retained as historical evidence.
 

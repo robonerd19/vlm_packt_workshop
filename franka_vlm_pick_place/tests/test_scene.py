@@ -10,7 +10,7 @@ sys.path.insert(0, str(root))
 from vlm_pick_place.description import (CAMERA_RPY, CAMERA_XYZ, GRASPABLE, READY, TABLE_Z,  # noqa: E402
                                         gazebo_urdf)
 from vlm_pick_place.kinematics import PandaKinematics, top_down  # noqa: E402
-from vlm_pick_place.perception import (PerceptionError, optical_to_world, parse_box,  # noqa: E402
+from vlm_pick_place.perception import (PerceptionError, model_size, optical_to_world, parse_box,  # noqa: E402
                                        project_box)
 
 world = ET.parse(root/'worlds/tabletop.sdf').getroot()
@@ -50,7 +50,12 @@ def test_project_box_finds_cube_top_in_loose_box():
 
 
 def test_parse_box_rejects_bad_output():
-    assert parse_box('{"found":true,"bbox":[0,0,500,1000]}', 640, 480) == (0, 0, 320, 480)
+    assert parse_box('{"found":true,"bbox":[0,0,320,480]}', 640, 480) == (0, 0, 320, 480)
+    # Ollama answers in pixels of its 1036x784 resize of a 4:3 frame.
+    assert model_size(640, 480) == (1036, 784)
+    assert parse_box('{"found":true,"bbox_2d":[518,392,1036,784]}', 640, 480, (1036, 784)) == (320, 240, 640, 480)
+    with pytest.raises(PerceptionError):
+        parse_box('{"bbox_2d":[0,0,1037,700]}', 640, 480, (1036, 784))
     for text in ('{"found":false}', '{"bbox":[1,2,3]}', 'nonsense', '{"bbox":[5,5,1,1]}'):
         with pytest.raises(PerceptionError):
             parse_box(text, 640, 480)

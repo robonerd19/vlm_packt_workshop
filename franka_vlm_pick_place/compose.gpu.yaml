@@ -1,14 +1,6 @@
-# Use with compose.yaml for CUDA inference: scripts/workshop.sh start gpu
+# Use with compose.yaml for GPU inference: scripts/workshop.sh start gpu
 services:
   inference:
-    image: vlm-workshop-inference-cuda:local
-    build:
-      context: .
-      dockerfile: docker/inference.cuda.Dockerfile
-      args:
-        CUDA_ARCHITECTURES: ${CUDA_ARCHITECTURES:-89}
-        BUILD_JOBS: ${GPU_BUILD_JOBS:-2}
-    command: [gpu]
     deploy:
       resources:
         reservations:

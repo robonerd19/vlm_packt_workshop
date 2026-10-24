@@ -2,7 +2,7 @@
 
 At every station Spot stops, faces the asset, grabs an inspection-camera frame and
 sends it with the station's short question to an OpenAI-compatible VLM endpoint
-(llama.cpp + Qwen2-VL); a per-station rule turns the answer into OK/ANOMALY.
+(Ollama + Qwen2.5-VL); a per-station rule turns the answer into OK/ANOMALY.
 Findings go to /inspection/report and a Markdown report.
 """
 import base64

@@ -211,7 +211,7 @@ See [UPSTREAM.md](UPSTREAM.md) for the robot source revision and its licensing n
 ## VLM object finding
 
 Type an instruction such as `go to the green dumpster` in a browser and the Go2
-finds it from patrol memory (below) or looks for the object with Qwen2-VL-2B in its D455 RGB-D camera, projects the
+finds it from patrol memory (below) or looks for the object with Qwen2.5-VL-3B in its D455 RGB-D camera, projects the
 detection into the map with depth and TF, and walks there with the Nav2 stack
 above. If the object is not in view it turns in place and then visits a few
 free-space viewpoints on the map; an object it cannot find is refused without
@@ -225,18 +225,16 @@ settings are in `src/vlm_nav/config/go2_warehouse.yaml`: D455 topics
 `base_footprint` frames, and `camera_frame: d455_camera_depth_optical_frame`.
 Gazebo stamps the D455 images with `d455_camera_link` (x forward), while the
 pixels follow the optical convention (z forward), so the navigator relabels
-them with the optical frame at the same origin. The model server reuses the
-TurtleBot project's llama.cpp images (`vlm-workshop-inference[-cuda]:local`,
-built from that project if missing) and its model files in
-`../turtlebot4_vla_object_finder/models` (download them there with
-`bash scripts/download_model.sh`, or set `MODEL_DIR`).
+them with the optical frame at the same origin. The model server is the official
+Ollama image serving `qwen2.5vl:3b` from the `vlm-workshop-ollama` volume shared
+with the other workshop projects; the first start downloads the model (3.2 GB).
 
 Run each command in its own terminal, from this folder:
 
 ```bash
 GO2_PUBLISH_MAP_TO_ODOM=false bash scripts/go2_sim.sh start gpu warehouse
 bash scripts/start_nav2.sh nav2
-bash scripts/start_vlm.sh gpu      # Qwen2-VL server on 8081, web UI on 8000
+bash scripts/start_vlm.sh gpu      # Ollama VLM server on 8081, web UI on 8000
 ```
 
 Open <http://127.0.0.1:8000>, wait for the status to show ready, and send an
@@ -249,7 +247,7 @@ and 8081 are shared with the other workshop projects, so stop those first.
 
 Send `patrol` to have the Go2 walk the `patrol_points` in
 `src/vlm_nav/config/go2_warehouse.yaml` with Nav2, turning through
-`patrol_headings` views at each point. For every view Qwen2-VL lists the objects
+`patrol_headings` views at each point. For every view Qwen2.5-VL lists the objects
 it sees with boxes; depth and TF place each one in the map, and it is remembered
 as a labelled waypoint: the object position plus a viewing pose 1.2 m in front of
 it, which the robot reached on patrol. Waypoints appear under "Remembered

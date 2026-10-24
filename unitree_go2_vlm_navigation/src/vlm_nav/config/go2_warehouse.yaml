@@ -10,7 +10,9 @@ vlm_navigator:
     odom_topic: /odom
     map_frame: map
     base_frame: base_footprint
-    image_width: 320
+    # Native D455 width: Ollama upscales every frame to 1036x784 anyway, and at 320
+    # the 3B model missed the half-hidden green dumpster that it finds at 640.
+    image_width: 640
     max_new_tokens: 128
     approach_distance: 1.2
     nav_timeout: 240.0
