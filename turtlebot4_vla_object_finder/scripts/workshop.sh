@@ -12,7 +12,7 @@ Usage:
   bash scripts/workshop.sh start [cpu|gpu]
   bash scripts/workshop.sh stop
 
-setup downloads/checks the VLM files and builds the ROS and selected inference images.
+setup builds the ROS image and pulls the VLM (qwen2.5vl:3b) into the Ollama server.
 start launches the real warehouse demo with the selected inference device (CPU default).
 stop shuts down workshop modes and the optional Gazebo GUI container.
 GPU mode requires NVIDIA drivers and Docker GPU support.
@@ -46,13 +46,15 @@ if [[ "$command_name" == start ]]; then
   exec bash scripts/run_demo.sh --device "$device"
 fi
 
-for prerequisite in docker curl python3 sha256sum; do
+for prerequisite in docker curl python3; do
   command -v "$prerequisite" >/dev/null || { echo "Missing prerequisite: $prerequisite" >&2; exit 1; }
 done
 docker compose version >/dev/null
+compose=(docker compose -f compose.yaml)
 if [[ "$device" == gpu ]]; then
   command -v nvidia-smi >/dev/null || { echo 'GPU setup requires NVIDIA drivers (nvidia-smi not found).' >&2; exit 1; }
   nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
+  compose+=(-f compose.gpu.yaml)
 fi
 
 if [[ ! -f .env ]]; then
@@ -60,23 +62,15 @@ if [[ ! -f .env ]]; then
   echo 'Created .env from .env.example.'
 fi
 docker compose --profile simulation config -q
-bash scripts/download_model.sh
 
-compose=(docker compose -f compose.yaml)
-if [[ "$device" == gpu ]]; then
-  compose+=(-f compose.gpu.yaml)
-  if [[ -z "${CUDA_ARCHITECTURES:-}" ]]; then
-    CUDA_ARCHITECTURES="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | tr -d '. ' | sort -u | paste -sd ';' -)"
-  fi
-  [[ "$CUDA_ARCHITECTURES" =~ ^[0-9]+(\;[0-9]+)*$ ]] || {
-    echo 'CUDA_ARCHITECTURES must contain numeric architectures separated by semicolons.' >&2
-    exit 2
-  }
-  export CUDA_ARCHITECTURES
-  echo "CUDA architectures: $CUDA_ARCHITECTURES"
-fi
-
-# Build sequentially to keep peak build memory down.
 "${compose[@]}" --profile simulation build simulation
-"${compose[@]}" --profile simulation build inference
+# Ollama keeps the model in the "ollama" volume; the application asks for it as "vlm".
+model=qwen2.5vl:3b
+"${compose[@]}" --profile simulation up -d --no-deps inference
+for _ in {1..30}; do
+  "${compose[@]}" exec -T inference ollama list >/dev/null 2>&1 && break
+  sleep 1
+done
+"${compose[@]}" exec -T inference ollama pull "$model"
+"${compose[@]}" exec -T inference ollama cp "$model" vlm
 echo "Setup complete for $device mode. Start it with: bash scripts/workshop.sh start $device"

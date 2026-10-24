@@ -1,11 +1,11 @@
 # ROS 2 VLM navigation workshop — CPU or NVIDIA GPU
 
 A local browser sends an instruction to a ROS 2 Jazzy action server. The robot
-searches camera views with Qwen2-VL, registered depth and TF locate the detected
+searches camera views with Qwen2.5-VL 3B (served by Ollama), registered depth and TF locate the detected
 object on the map, and Nav2 navigates toward it.
 
 Default target: Ubuntu 24.04 on AMD/Intel x86-64 with AVX2, CPU-only, 8 GB RAM.
-Optional NVIDIA CUDA inference is selected with a launch argument.
+Optional NVIDIA GPU inference is selected with a launch argument.
 See [architecture](docs/architecture.md) for interfaces and acceptance criteria.
 The default simulation uses the official TurtleBot 4 Standard robot and
 warehouse environment. The original small-room demo remains selectable. See
@@ -16,8 +16,8 @@ warehouse environment. The original small-room demo remains selectable. See
 - Linux Docker Engine and Docker Compose; permission to run Docker.
 - An x86-64 CPU with AVX2 (modern AMD Ryzen processors qualify).
 - Approximately 30 GB free SSD space for image builds, caches, and model files.
-- Internet for the first build, warehouse asset downloads, and 2.3 GB VLM download.
-  Runtime uses baked warehouse resources and local model files.
+- Internet for the first build, warehouse asset downloads, and the 3.2 GB VLM download.
+  Runtime uses baked warehouse resources and the locally stored model.
 - Ports 8000 and 8081 available. These bind to localhost by default.
 
 Install Docker, Compose v2 and the NVIDIA Container Toolkit with
@@ -31,14 +31,15 @@ shared-memory transport issues. Native ROS clients must use the same settings.
 ## First-time Docker setup
 
 ROS 2, Gazebo, Nav2, and inference run in Docker; no host ROS or Gazebo
-installation is needed. The helper creates `.env` if needed, downloads and
-checksum-verifies the model files, and builds the ROS and selected inference
-images. It uses Docker Compose v2 (`docker compose`).
+installation is needed. The helper creates `.env` if needed, builds the ROS
+image, starts the official Ollama container and pulls `qwen2.5vl:3b` into the
+`ollama` Docker volume, available to the application under the name `vlm`.
+It uses Docker Compose v2 (`docker compose`).
 
 ```bash
 cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
 
-# Choose one setup mode. Re-running setup reuses verified model files.
+# Choose one setup mode. Re-running setup reuses the downloaded model.
 bash scripts/workshop.sh setup cpu
 # Or, on a supported NVIDIA machine:
 bash scripts/workshop.sh setup gpu
@@ -46,8 +47,8 @@ bash scripts/workshop.sh setup gpu
 
 The first setup needs internet access and about 30 GB of free disk space. GPU
 setup requires NVIDIA drivers and Docker GPU support through
-[NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html);
-the first CUDA image build downloads several GB and compiles native code. For
+[NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+The Ollama image is prebuilt for all NVIDIA GPUs, so nothing is compiled. For
 an existing small-room `.env`, set `SIM_SCENE=warehouse` and
 `SIMULATION_MEMORY=1536m` to use the current warehouse defaults.
 
@@ -82,8 +83,8 @@ Open **http://127.0.0.1:8000** in a browser on this PC:
 3. Submit `home` and wait for it to finish. Home is the warehouse spawn pose (-3, -1).
 4. Use the Cancel control to cancel an active request.
 
-CPU inference took roughly 45–55 seconds per image on the tested host;
-performance depends on your CPU. Submit one request at a time. If the object is
+On an RTX 4060 laptop each detection takes about 0.5 s. CPU timings for the 3B model
+have not been measured yet; expect tens of seconds per image. Submit one request at a time. If the object is
 absent, the robot turns in 10-degree steps, waits one second after each turn,
 and takes a fresh RGB-D check. It then visits up to three spaced viewpoints in the connected free
 part of the existing map and repeats the checks. Nav2 plans and executes all
@@ -142,38 +143,31 @@ set `SIM_SCENE=workshop` in `.env` and recreate the stack with `down` / `up -d`.
 Use `SIM_SCENE=warehouse` (the default) for TurtleBot 4. The same scene setting
 selects the simulation, map, initial localization pose, and home pose together.
 
-GPU mode uses a separate CUDA
-image built from the same pinned llama.cpp revision and the same model files.
-It offloads model layers and the image projector to the GPU. The inference API,
-robot, map, search logic, and CPU software rendering in Gazebo stay the same.
-This option supports NVIDIA CUDA, not AMD/Intel integrated GPUs. An AMD x86-64
-CPU can use it when the machine also has a supported NVIDIA GPU.
-
-The helper detects CUDA architectures from the host GPU. `GPU_BUILD_JOBS`
-defaults to 2 to limit build RAM; set it higher for larger build machines.
+GPU mode runs the same Ollama image with access to the NVIDIA GPU; the
+inference API, robot, map, search logic, and CPU software rendering in Gazebo
+stay the same. This option supports NVIDIA GPUs, not AMD/Intel integrated GPUs.
 Switching devices recreates only inference, preserving the robot pose and
 localization. If a request is active or the robot is moving, use Cancel and wait
 for its terminal result before switching. The helper also stops the optional
 Gazebo GUI when you run its `stop` command.
 
-`GPU_LAYERS=999` in `.env` requests all layers; smaller positive values offload fewer
-language-model layers. The projector remains GPU-enabled in GPU mode. Both modes
-retain the single model slot, 2048-token context, and existing container RAM limits.
-VRAM is additional to system RAM; GPU mode needs its own hardware validation and
-is not evidence of whole-PC usage below 8 GB RAM.
+Qwen2.5-VL answers boxes in pixels of the image Ollama resizes it to (1008x756
+for a 4:3 frame, whatever size is sent), not in normalized coordinates. The
+client sends the 320x240 JPEG frame and converts the box from that size back to
+the camera image (`model_size` and `parse_box` in `vlm_nav/perception.py`).
+Sending a 1008x756 JPEG instead made Ollama 0.40.10 answer with empty text and
+fail every later request until `docker compose restart inference`.
 
 Inspect the selected backend:
 
 ```bash
 docker compose --profile simulation logs --tail 60 inference
-nvidia-smi
+docker compose --profile simulation exec inference ollama ps   # PROCESSOR shows GPU or CPU
 curl -fsS http://127.0.0.1:8000/status
 ```
 
-The log announces `Starting cpu inference` or `Starting gpu inference`; GPU logs
-should show CUDA and GPU tensor offload. CPU mode explicitly sets zero GPU layers
-and disables projector offload. GPU startup rejects an unavailable CUDA device
-rather than silently running in CPU mode.
+Ollama falls back to the CPU without an error when the container cannot reach
+the GPU; `ollama ps` shows which one is in use.
 
 ## Open the optional Gazebo 3D GUI
 
@@ -307,8 +301,8 @@ bash scripts/workshop.sh start cpu
 Use `gpu` in the setup and start commands for NVIDIA inference. A restart alone
 does not install source changes because the images contain copied files.
 
-If startup fails, inspect `ps`, `/status`, and the logs above. Missing model files
-require the download step; port conflicts usually mean another workshop mode
+If startup fails, inspect `ps`, `/status`, and the logs above. A missing model
+(`ollama show vlm` fails) requires the setup step; port conflicts usually mean another workshop mode
 or application is still running. To reset the simulated robot/world and Nav2
 localization, use the helper's `stop` followed by `start` while no request is active.
 

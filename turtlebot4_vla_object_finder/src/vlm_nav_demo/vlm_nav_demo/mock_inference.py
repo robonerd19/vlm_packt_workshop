@@ -28,8 +28,12 @@ class Handler(BaseHTTPRequestHandler):
                 image = cv2.imdecode(np.frombuffer(base64.b64decode(encoded), np.uint8), cv2.IMREAD_COLOR)
                 hidden_visible = np.count_nonzero(image[:, :, 0].astype(float)-image[:, :, 2] > 80) > 1000
                 absent = 'missing' in prompt or ('hidden' in prompt and not hidden_visible)
+                # Answer like Ollama: pixels of its 1008-wide resize (vlm_nav.perception.model_size).
+                mw = 1008
+                mh = round(mw * image.shape[0] / image.shape[1] / 28) * 28
                 value = {'label': 'blue chair' if hidden_visible else 'red chair'} if 'describe the main visible' in prompt else (
-                    {'found': False} if absent else {'found': True, 'bbox': [350, 300, 650, 700]})
+                    {'found': False} if absent else {'found': True, 'bbox_2d': [
+                        round(mw*0.35), round(mh*0.3), round(mw*0.65), round(mh*0.7)]})
             else:
                 value = {'found': 'missing' not in prompt}
             text = json.dumps(value)

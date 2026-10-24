@@ -1,17 +1,24 @@
 import json
 import numpy as np
 import pytest
-from vlm_nav.perception import InferenceClient, PerceptionError, approach_goal, description_matches, identity_matches, parse_box, project_box
+from vlm_nav.perception import InferenceClient, PerceptionError, approach_goal, description_matches, identity_matches, model_size, parse_box, project_box
 
 
 def test_box_coordinates_map_back_to_original_image():
-    assert parse_box('{"found":true,"bbox":[250,250,750,750]}',640,480)==(160,120,480,360)
+    assert parse_box('{"found":true,"bbox":[160,120,480,360]}',640,480)==(160,120,480,360)
 
 
-@pytest.mark.parametrize('box',[[800,0,200,1000],[-1,0,1000,1000],[0,0,1001,1000],
-                               [0,0,0,20],[True,0,1000,1000],[0,0,float('nan'),1000]])
+def test_ollama_pixel_box_scales_from_sent_size():
+    # Real qwen2.5vl:3b answer for the standing person in the 320x240 home view.
+    assert model_size(320, 240) == (1008, 756)
+    x1, y1, x2, y2 = parse_box('{"found":true,"bbox_2d":[456,129,557,442]}', 320, 240, (1008, 756))
+    assert 140 < x1 < 150 and 36 < y1 < 46 and 172 < x2 < 182 and 135 < y2 < 145
+
+
+@pytest.mark.parametrize('box',[[800,0,200,700],[-1,0,1000,700],[0,0,1009,700],[0,0,500,757],
+                               [0,0,0,20],[True,0,1000,700],[0,0,float('nan'),700]])
 def test_invalid_coordinates_are_rejected(box):
-    with pytest.raises(PerceptionError):parse_box(json.dumps({'bbox':box}),320,240)
+    with pytest.raises(PerceptionError):parse_box(json.dumps({'bbox_2d':box}),320,240,(1008,756))
 
 
 def test_missing_object_rejected():
