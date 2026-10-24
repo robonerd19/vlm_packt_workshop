@@ -119,14 +119,18 @@ def identity_matches(label, instruction):
     target = set(re.findall(r'[a-z]+', instruction.lower()))
     observed = set(re.findall(r'[a-z]+', label.lower()))
     requested = [group for group in groups if group & target]
-    if len(requested) != 1:
-        return None
-    if not requested[0] & observed:
-        return False
     colors = set('red green blue yellow orange purple black white brown gray grey'.split())
     normalize = lambda words: {'gray' if word == 'grey' else word for word in words}
     required_colors = normalize(target & colors)
     observed_colors = normalize(observed & colors)
+    if len(requested) != 1:
+        # A named color that the candidate visibly lacks rejects any class; the
+        # 2B text comparison accepted "blue sofa" for a green bin.
+        if required_colors and observed_colors and not required_colors <= observed_colors:
+            return False
+        return None
+    if not requested[0] & observed:
+        return False
     if required_colors and not required_colors <= observed_colors:
         return False
     if 'standing' in target and observed & {'sitting', 'seated', 'lying'}:

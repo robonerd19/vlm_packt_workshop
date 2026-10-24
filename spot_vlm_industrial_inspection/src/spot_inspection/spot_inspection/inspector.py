@@ -118,8 +118,9 @@ class Inspector(Node):
         self.cmd.publish(t)
 
     def walk_to(self, gx, gy, gyaw, timeout=180.0):
+        """Returns True once at the pose, False if the timeout ran out first."""
         start = self.now()
-        arrived = False
+        arrived = reached = False
         while rclpy.ok() and self.now() - start < timeout:
             x, y, yaw = self.pose
             if not arrived:
@@ -127,6 +128,7 @@ class Inspector(Node):
             else:
                 err = wrap(gyaw - yaw)
                 if abs(err) < 0.05:
+                    reached = True
                     break
                 vx, wz = 0.0, max(-0.5, min(0.5, 1.5 * err))
             self.publish(vx, wz)
@@ -134,6 +136,7 @@ class Inspector(Node):
         else:
             self.get_logger().warn(f'Timed out walking to ({gx:.1f}, {gy:.1f})')
         self.publish()
+        return reached
 
     def capture(self):
         """Wait for a frame taken after the robot stopped and settled."""
@@ -169,17 +172,20 @@ class Inspector(Node):
         results = []
         for i, st in enumerate(self.stations, 1):
             self.get_logger().info(f'[{i}/{len(self.stations)}] Walking to {st["name"]}')
-            self.walk_to(st['x'], st['y'], math.radians(st['yaw']))
+            reached = self.walk_to(st['x'], st['y'], math.radians(st['yaw']))
             image = self.capture()
             image_file = f'station_{i}.jpg'
             cv2.imwrite(str(run_dir / image_file), image)
             t0 = time.monotonic()
-            try:
-                answer = self.ask_vlm(zoom(image, st.get('zoom', 1)), st['question'], 16).strip()
-                anomaly, value = judge(answer, st)
-                finding = self.ask_vlm(image, DESCRIBE).strip()
-            except (OSError, ValueError, KeyError, RuntimeError) as exc:
-                answer, anomaly, value, finding = '', None, None, f'VLM request failed: {exc}'
+            if not reached:  # the camera may be pointing at something else: no verdict
+                answer, anomaly, value, finding = '', None, None, 'Did not reach the station; not inspected.'
+            else:
+                try:
+                    answer = self.ask_vlm(zoom(image, st.get('zoom', 1)), st['question'], 16).strip()
+                    anomaly, value = judge(answer, st)
+                    finding = self.ask_vlm(image, DESCRIBE).strip()
+                except (OSError, ValueError, KeyError, RuntimeError) as exc:
+                    answer, anomaly, value, finding = '', None, None, f'VLM request failed: {exc}'
             result = {'station': st['name'], 'x': st['x'], 'y': st['y'], 'image': image_file,
                       'question': st['question'], 'answer': answer, 'value': value, 'anomaly': anomaly,
                       'finding': finding, 'inference_s': round(time.monotonic() - t0, 1)}

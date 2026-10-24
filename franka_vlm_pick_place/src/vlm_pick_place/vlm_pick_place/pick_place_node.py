@@ -168,6 +168,7 @@ class PickPlace(Node):
         return point
 
     def run(self, instruction):
+        model = None  # cube currently attached to the hand
         try:
             self.move_joints(OBSERVE)
             bgr, depth = self.fresh_frames()
@@ -201,13 +202,16 @@ class PickPlace(Node):
             self.move_tcp(release + [0, 0, 0.12])
             self.move_tcp(release, steps=5)
             self.detach[model].publish(Empty())
+            placed, model = model, None
             time.sleep(0.3)
             self.grip(OPEN)
             self.move_tcp(release + [0, 0, 0.12], steps=5)
             self.move_joints(OBSERVE)
-            self.log(f'Done: placed {model} on the {place}.')
+            self.log(f'Done: placed {placed} on the {place}.')
         except Exception as exc:  # report every failure to the operator, then return to observe
             self.log(f'Failed: {exc}')
+            if model:  # never leave a cube welded to the hand
+                self.detach[model].publish(Empty())
             try:
                 self.move_joints(OBSERVE)
             except Exception as again:

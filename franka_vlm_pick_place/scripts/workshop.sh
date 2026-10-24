@@ -29,8 +29,11 @@ case "$command_name" in
   logs) docker compose -f compose.yaml logs -f --tail 50 ;;
   gui)
     # Gazebo GUI client joining the headless server; needs an X11 desktop.
-    xhost +local:docker >/dev/null 2>&1 || true
+    # X11 authorization is mounted read-only; no xhost access relaxation is needed.
+    xauthority="${XAUTHORITY:-$HOME/.Xauthority}"
+    [[ -r "$xauthority" ]] || { echo "X11 authorization file is unreadable: $xauthority" >&2; exit 1; }
     docker run --rm -it --network host -e DISPLAY -e ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-78}" \
+      -e XAUTHORITY=/tmp/.Xauthority -v "$xauthority:/tmp/.Xauthority:ro" \
       -v /tmp/.X11-unix:/tmp/.X11-unix franka-vlm-ros:local gz sim -g ;;
   *) usage; [[ -z "$command_name" || "$command_name" == -h ]] && exit 0 || exit 2 ;;
 esac

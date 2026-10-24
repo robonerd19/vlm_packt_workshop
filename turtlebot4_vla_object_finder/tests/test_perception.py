@@ -1,7 +1,7 @@
 import json
 import numpy as np
 import pytest
-from vlm_nav.perception import InferenceClient, PerceptionError, approach_goal, description_matches, parse_box, project_box
+from vlm_nav.perception import InferenceClient, PerceptionError, approach_goal, description_matches, identity_matches, parse_box, project_box
 
 
 def test_box_coordinates_map_back_to_original_image():
@@ -70,3 +70,9 @@ def test_frame_description_can_confirm_a_matching_target_without_using_a_crop():
                                'go to the standing person')
     assert not description_matches('{"scene":"yellow safety barrier and shelves"}',
                                    'go to the standing person')
+
+
+def test_named_color_rejects_any_class_before_text_comparison():
+    assert identity_matches('green object with wheels', 'go to the blue sofa') is False
+    assert identity_matches('green object with wheels', 'go to the green dumpster') is None
+    assert identity_matches('object with wheels', 'go to the blue sofa') is None
