@@ -45,6 +45,8 @@ if [[ -z "$container_id" ]] || [[ "$(docker inspect -f '{{.State.Running}}' "$co
 fi
 
 trap cleanup_nav EXIT INT TERM
+# Nav2 gives up for good if its costmap cannot find odom -> base_footprint at activation,
+# so the launch below waits for that transform as well as for the Velodyne cloud.
 "${compose[@]}" exec -T go2-simulation bash -lc \
   'set -e; source /go2_ws/install/setup.bash; \
    if [[ "${GO2_PUBLISH_MAP_TO_ODOM:-true}" != false ]]; then \
@@ -52,6 +54,9 @@ trap cleanup_nav EXIT INT TERM
    fi; \
    if ! timeout 8 ros2 topic echo --once /velodyne_points/points >/dev/null 2>&1; then \
      echo "No Velodyne point cloud is arriving. Start GPU mode, or CPU mode with GO2_DISABLE_VELODYNE=false." >&2; exit 3; \
+   fi; \
+   if ! timeout 60 bash -c "until timeout 5 ros2 run tf2_ros tf2_echo odom base_footprint 2>/dev/null | grep -q -m1 Translation; do sleep 1; done"; then \
+     echo "No odom -> base_footprint transform yet. Wait for the Go2 to stand, then retry." >&2; exit 4; \
    fi; \
    if [[ "'"$mode"'" == slam ]]; then \
      exec ros2 launch go2_warehouse_slam slam.launch.py; \

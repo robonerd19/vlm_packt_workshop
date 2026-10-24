@@ -385,6 +385,8 @@ class Navigator(Node):
         found, _ = self.backend.list_objects(bgr)
         self.check_cancel(handle)
         self.check_still(robot_xy, robot_yaw)
+        if not found:
+            return ['no objects listed']
         placed = []
         for label, box in found:
             if set(label.split()) & {'floor', 'wall', 'walls', 'ceiling', 'sky', 'background', 'tape', 'marking', 'markings', 'line', 'lines', 'stripe', 'stripes', 'shadow'}:
@@ -393,7 +395,9 @@ class Navigator(Node):
                 # A clipped box measured the wall behind the dumpster; a later view sees it whole.
                 require_complete_box(box, bgr.shape[1], bgr.shape[0])
                 xy = self.to_map(box, depth, info, header, optical_tf)
-            except PerceptionError:
+            except PerceptionError as exc:
+                # Say why, so the operator can tell a missed object from a rejected one.
+                placed.append(f'{label} not placed ({exc})')
                 continue
             try:
                 goal = approach_goal(xy, robot_xy, self.p('approach_distance'))

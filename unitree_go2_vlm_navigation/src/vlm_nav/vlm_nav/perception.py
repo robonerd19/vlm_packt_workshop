@@ -231,7 +231,9 @@ class InferenceClient:
                   'in pixel coordinates of the image.')
         # The model may repeat one entry until the token limit and writes "bbox_2d" in
         # either key order, so read each complete flat {...} entry instead of the whole JSON.
-        text = self.complete(jpeg, prompt, 256)
+        # Plain text, not JSON mode: on 10 patrol frames JSON mode listed one object per view
+        # (often just "warehouse"); plain text also listed the forklift, racks and stacks.
+        text = self.complete(jpeg, prompt, 256, json_mode=False)
         entries = []
         for chunk in re.findall(r'\{[^{}]*\}', text):
             try:
@@ -334,14 +336,15 @@ class InferenceClient:
             raise ObjectNotFound('Candidate identity was not confirmed: '+label)
         return label
 
-    def complete(self, jpeg, prompt, tokens, timeout=None):
+    def complete(self, jpeg, prompt, tokens, timeout=None, json_mode=True):
         content = [{'type': 'text', 'text': prompt}]
         if jpeg is not None:
             content.insert(0, {'type': 'image_url', 'image_url': {
                 'url': 'data:image/jpeg;base64,'+base64.b64encode(jpeg).decode()}})
-        body = {'model': 'vlm', 'temperature': 0,
-                'response_format': {'type': 'json_object'}, 'max_tokens': min(256, max(32, tokens)),
+        body = {'model': 'vlm', 'temperature': 0, 'max_tokens': min(256, max(32, tokens)),
                 'messages': [{'role': 'user', 'content': content}]}
+        if json_mode:
+            body['response_format'] = {'type': 'json_object'}
         request = urllib.request.Request(self.url + '/v1/chat/completions',
                                          json.dumps(body).encode(),
                                          {'Content-Type': 'application/json'})
