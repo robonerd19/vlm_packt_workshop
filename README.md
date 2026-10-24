@@ -21,17 +21,18 @@ README. This page tells you how to run each one on its own.
   CPU mode works everywhere but each VLM answer takes 45–60 s instead of about 1 s.
 
 Clone the repo into your home folder (the commands below assume
-`~/vlm_packt_workshop`) and install Docker, Compose v2 and, for GPU mode, the
-NVIDIA Container Toolkit with one script:
+`~/vlm_packt_workshop`) and install Docker, Compose v2 and the NVIDIA Container
+Toolkit with one script:
 
 ```bash
 git clone https://github.com/runtimerobotics/vlm_packt_workshop.git ~/vlm_packt_workshop
 cd ~/vlm_packt_workshop
-bash scripts/install_prereqs.sh cpu     # or: gpu (needs a working NVIDIA driver first)
+bash scripts/install_prereqs.sh         # GPU (default; needs a working NVIDIA driver)
+bash scripts/install_prereqs.sh cpu     # or: no NVIDIA GPU, skips the toolkit
 ```
 
 The script asks for your sudo password, skips anything already installed, and
-finishes by running a test container (and `nvidia-smi` inside one for `gpu`). If
+finishes by running a test container (and `nvidia-smi` inside one in GPU mode). If
 it added you to the `docker` group, log out and back in before continuing. For
 GPU mode without a driver, run `sudo ubuntu-drivers install`, reboot, then rerun
 the script.

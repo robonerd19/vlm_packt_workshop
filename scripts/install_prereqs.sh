@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Installs Docker Engine + Compose v2, and with `gpu` the NVIDIA Container Toolkit,
-# on Ubuntu 24.04. Safe to re-run: anything already working is skipped.
+# Installs Docker Engine + Compose v2 and the NVIDIA Container Toolkit on Ubuntu 24.04;
+# `cpu` skips the toolkit for machines without an NVIDIA GPU. Safe to re-run: anything already working is skipped.
 # Follows https://docs.docker.com/engine/install/ubuntu/ and
 # https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
 set -euo pipefail
-usage() { echo 'Usage: bash scripts/install_prereqs.sh [cpu|gpu]   (gpu also installs NVIDIA Container Toolkit)'; }
-mode="${1:-cpu}"
+usage() { echo 'Usage: bash scripts/install_prereqs.sh [gpu|cpu]   (default gpu; cpu skips NVIDIA Container Toolkit)'; }
+mode="${1:-gpu}"
 case "$mode" in
   cpu|gpu) ;;
   -h|--help) usage; exit 0 ;;
@@ -54,6 +54,7 @@ if [[ "$mode" == gpu ]]; then
   if ! command -v nvidia-smi >/dev/null || ! nvidia-smi >/dev/null 2>&1; then
     echo 'No working NVIDIA driver (nvidia-smi failed). Install one, reboot, and re-run:' >&2
     echo '  sudo ubuntu-drivers install && sudo reboot' >&2
+    echo 'No NVIDIA GPU? Run: bash scripts/install_prereqs.sh cpu' >&2
     exit 1
   fi
   if command -v nvidia-ctk >/dev/null; then
