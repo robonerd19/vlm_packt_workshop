@@ -4,40 +4,29 @@ set -euo pipefail
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 device=cpu
-build=0
 usage() {
   cat <<'HELP'
-Usage: bash scripts/run_demo.sh [--device cpu|gpu] [--build]
+Usage: bash scripts/run_demo.sh [--device cpu|gpu]
   --device cpu  CPU-only inference (default).
   --device gpu  NVIDIA CUDA inference; requires driver and Docker GPU access.
-  --build       Rebuild the selected inference image before starting.
-Missing/outdated inference images are built automatically. ROS images and models
-must already be prepared as described in README. Existing ROS services retain
+The ROS image and the Ollama model must already be prepared with
+bash scripts/workshop.sh setup. Existing ROS services retain
 their current image and robot pose. Stop all demo modes before switching from mock.
 HELP
 }
 while (($#)); do
   case "$1" in
     --device) [[ $# -ge 2 ]] || { usage >&2; exit 2; }; device="$2"; shift 2 ;;
-    --build) build=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
 [[ "$device" == cpu || "$device" == gpu ]] || { echo '--device must be cpu or gpu.' >&2; exit 2; }
 compose=(docker compose -f "$root/compose.yaml")
-image=vlm-workshop-inference:local
 if [[ "$device" == gpu ]]; then
   command -v nvidia-smi >/dev/null || { echo 'GPU mode requires NVIDIA drivers (nvidia-smi not found).' >&2; exit 1; }
   nvidia-smi --query-gpu=name,driver_version --format=csv,noheader
-  if [[ -z "${CUDA_ARCHITECTURES:-}" ]]; then
-    CUDA_ARCHITECTURES="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | tr -d '. ' | sort -u | paste -sd ';' -)"
-  fi
-  [[ "$CUDA_ARCHITECTURES" =~ ^[0-9]+(\;[0-9]+)*$ ]] || { echo 'CUDA_ARCHITECTURES must contain numeric architectures separated by semicolons.' >&2; exit 2; }
-  export CUDA_ARCHITECTURES
   compose+=(-f "$root/compose.gpu.yaml")
-  image=vlm-workshop-inference-cuda:local
-  echo "CUDA architectures: $CUDA_ARCHITECTURES"
 fi
 # Refuse another ROS/model owner before mutating the selected services.
 for service in mock external; do
@@ -46,16 +35,6 @@ for service in mock external; do
     exit 1
   fi
 done
-label="$(docker image inspect "$image" --format '{{index .Config.Labels "org.vlm-workshop.inference.device"}}' 2>/dev/null || true)"
-if [[ "$label" != "$device" ]]; then build=1; fi
-if [[ "$device" == gpu ]]; then
-  arch="$(docker image inspect "$image" --format '{{index .Config.Labels "org.vlm-workshop.cuda.architectures"}}' 2>/dev/null || true)"
-  [[ "$arch" == "$CUDA_ARCHITECTURES" ]] || build=1
-fi
-if ((build)); then "${compose[@]}" --profile simulation build inference; fi
-if [[ "$device" == gpu ]]; then
-  docker run --rm --gpus all --entrypoint nvidia-smi "$image" --query-gpu=name,memory.total --format=csv,noheader
-fi
 # A backend switch must not interrupt a running navigation/inference request.
 # Obtain WEB_PORT through Compose rather than sourcing .env as shell code.
 port="$("${compose[@]}" --profile simulation config --format json | python3 -c 'import json,sys; c=json.load(sys.stdin); print(next(v.split(":=",1)[1] for v in c["services"]["application"]["command"] if v.startswith("web_port:=")))')"

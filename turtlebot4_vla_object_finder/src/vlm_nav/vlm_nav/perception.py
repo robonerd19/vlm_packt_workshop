@@ -31,25 +31,42 @@ def require_complete_box(box, width, height):
         raise UnusableDetection('Detection touches the image boundary; another view is needed.')
 
 
-def parse_box(text, width, height):
-    """Require normalized 0..1000 coordinates; never guess pixel conventions."""
+# Ollama resizes each image for Qwen2.5-VL like Qwen's smart_resize: sides become
+# multiples of 28 and small images are scaled up to at least 1024*28*28 pixels. The
+# model answers in pixels of that resized image, whatever size was sent and even when
+# asked for normalized coordinates (measured on Ollama 0.40.10: a 4:3 frame -> 1036x784).
+FACTOR, MIN_PIXELS = 28, 1024 * 28 * 28
+
+
+def model_size(width, height):
+    # shortcut: no max_pixels branch; frames above ~3.6 MP would need it.
+    w, h = round(width / FACTOR) * FACTOR, round(height / FACTOR) * FACTOR
+    if w * h < MIN_PIXELS:
+        beta = math.sqrt(MIN_PIXELS / (width * height))
+        w, h = math.ceil(width * beta / FACTOR) * FACTOR, math.ceil(height * beta / FACTOR) * FACTOR
+    return w, h
+
+
+def parse_box(text, width, height, sent=None):
+    """Read a pixel box given in the model's image size (default width x height); scale to width x height."""
+    sent_w, sent_h = sent or (width, height)
     clean = re.sub(r'^```(?:json)?\s*|\s*```$', '', text.strip())
     try:
         data = json.loads(clean)
         if data.get('found') is False:
             raise ObjectNotFound('Requested object was not found.')
-        box = data['bbox']
+        box = data['bbox_2d'] if 'bbox_2d' in data else data['bbox']
         if not isinstance(box, list) or len(box) != 4:
             raise ValueError('bbox must contain four numbers')
         if any(isinstance(x, bool) or not isinstance(x, (int, float)) for x in box):
             raise ValueError('bbox coordinates must be numbers')
         x1, y1, x2, y2 = map(float, box)
-        if not all(math.isfinite(x) and 0 <= x <= 1000 for x in box):
-            raise ValueError('bbox coordinates must be finite and in 0..1000')
+        if not all(math.isfinite(x) for x in box) or min(box) < 0 or x2 > sent_w or y2 > sent_h:
+            raise ValueError(f'bbox coordinates must be finite and inside the {sent_w}x{sent_h} image')
         if x2 <= x1 or y2 <= y1:
             raise ValueError('bbox must have positive area')
-        return (x1 * width / 1000, y1 * height / 1000,
-                x2 * width / 1000, y2 * height / 1000)
+        return (x1 * width / sent_w, y1 * height / sent_h,
+                x2 * width / sent_w, y2 * height / sent_h)
     except ObjectNotFound:
         raise
     except (ValueError, KeyError, TypeError, AttributeError) as exc:
@@ -163,7 +180,7 @@ class InferenceClient:
 
     def healthy(self):
         try:
-            with urllib.request.urlopen(self.url + '/health', timeout=1.0) as response:
+            with urllib.request.urlopen(self.url + '/v1/models', timeout=1.0) as response:
                 return response.status == 200
         except (OSError, ValueError):
             return False
@@ -177,13 +194,12 @@ class InferenceClient:
             raise PerceptionError('Unable to encode the camera image.')
         prompt = (
             'Locate the single object requested by this navigation instruction: '
-            + instruction + '. Return only JSON: {"found":true,"bbox":[x1,y1,x2,y2]}. '
-            'Coordinates MUST be normalized integers from 0 to 1000 relative to '
-            'the entire supplied image. If absent return {"found":false}. '
+            + instruction + '. Return only JSON: {"found":true,"bbox_2d":[x1,y1,x2,y2]} '
+            'in pixel coordinates of the supplied image. If absent return {"found":false}. '
             'Do not describe the image or output markdown.'
         )
         text = self.complete(jpeg, prompt, tokens)
-        return parse_box(text, w, h), text
+        return parse_box(text, w, h, model_size(w, h)), text
 
     def describe(self, bgr, tokens=96):
         """Describe a full camera frame without using the navigation target."""

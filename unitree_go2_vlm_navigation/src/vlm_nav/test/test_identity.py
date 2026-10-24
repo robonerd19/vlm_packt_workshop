@@ -12,10 +12,11 @@ def test_object_list_skips_invalid_entries_and_memory_matches_by_color():
     from vlm_nav.perception import InferenceClient
     client = InferenceClient('http://unused')
     client.complete = lambda *_args, **_kw: (
-        '{"objects":[{"label":"Green container","bbox":[500,100,700,600]},'
-        '{"label":"bad","bbox":[9,9,1,1]},{"bbox":[0,0,10,10]}]}')
+        '{"objects":[{"bbox_2d":[518,98,777,686],"label":"Green container"},'
+        '{"label":"bad","bbox_2d":[9,9,1,1]},{"bbox_2d":[0,0,10,10]}]}')
+    # Boxes are pixels of Ollama's 1036x784 resize of the 640x480 frame.
     found, _ = client.list_objects(np.zeros((480, 640, 3), np.uint8))
-    assert found == [('green container', (320.0, 48.0, 448.0, 288.0))]
+    assert found == [('green container', (320.0, 60.0, 480.0, 420.0))]
     client.complete = lambda *_args, **_kw: '{"index":0}'
     assert client.match_memory(['green container', 'yellow shelf'], 'go to the green dumpster') == 0
     assert client.match_memory(['yellow shelf'], 'go to the green dumpster') is None
@@ -27,7 +28,7 @@ def test_object_list_salvages_repeated_truncated_output():
     client = InferenceClient('http://unused')
     client.complete = lambda *_a, **_k: (
         '{"objects":[{"label":"yellow box","bbox":[412,367,572,550]},'
-        '{"label":"yellow box","bbox":[412,367,572,550]},{"label":"tape","bbox":[0,0,1000,1000]},{"label":"yel')
+        '{"label":"yellow box","bbox":[412,367,572,550]},{"label":"tape","bbox":[0,0,1036,784]},{"label":"yel')
     found, _ = client.list_objects(np.zeros((480, 640, 3), np.uint8))
     assert [label for label, _ in found] == ['yellow box']
 

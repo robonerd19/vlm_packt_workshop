@@ -1,5 +1,11 @@
 # CPU-only VLM navigation demo architecture
 
+> **Inference backend changed.** This document describes the llama.cpp server with
+> Qwen2-VL-2B. The project now runs `qwen2.5vl:3b` in the official Ollama
+> container (see `compose.yaml` and the README); interfaces, search, and
+> navigation are unchanged, but model, latency, and memory figures here are for
+> the earlier backend.
+
 Status: implemented. Real CPU inference, Gazebo navigation, and cancellation
 passed on an x86-64 development host. See [validation](validation.md) for evidence
 and the remaining physical 8 GB AMD PC acceptance check.

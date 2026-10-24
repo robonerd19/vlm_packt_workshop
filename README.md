@@ -6,10 +6,10 @@ README. This page tells you how to run each one on its own.
 
 | Project | Robot | What it does | VLM |
 |---|---|---|---|
-| [turtlebot4_vla_object_finder](turtlebot4_vla_object_finder/) | TurtleBot 4 | Finds an object named in a text instruction and drives to it with Nav2 | Qwen2-VL-2B |
-| [unitree_go2_vlm_navigation](unitree_go2_vlm_navigation/) | Unitree Go2 | Quadruped that patrols a warehouse, marks the objects it sees as map waypoints, and walks to one when asked | Qwen2-VL-2B |
-| [franka_vlm_pick_place](franka_vlm_pick_place/) | Franka Panda | Understands a tabletop scene and does pick and place from a text instruction | Qwen2-VL-2B |
-| [spot_vlm_industrial_inspection](spot_vlm_industrial_inspection/) | Boston Dynamics Spot | Walks an inspection route and flags faults (gauges, leaks, open cabinet...) | Qwen2-VL-2B |
+| [turtlebot4_vla_object_finder](turtlebot4_vla_object_finder/) | TurtleBot 4 | Finds an object named in a text instruction and drives to it with Nav2 | Qwen2.5-VL-3B |
+| [unitree_go2_vlm_navigation](unitree_go2_vlm_navigation/) | Unitree Go2 | Quadruped that patrols a warehouse, marks the objects it sees as map waypoints, and walks to one when asked | Qwen2.5-VL-3B |
+| [franka_vlm_pick_place](franka_vlm_pick_place/) | Franka Panda | Understands a tabletop scene and does pick and place from a text instruction | Qwen2.5-VL-3B |
+| [spot_vlm_industrial_inspection](spot_vlm_industrial_inspection/) | Boston Dynamics Spot | Walks an inspection route and flags faults (gauges, leaks, open cabinet...) | Qwen2.5-VL-3B |
 
 ## Before you start (all projects)
 
@@ -37,8 +37,10 @@ it added you to the `docker` group, log out and back in before continuing. For
 GPU mode without a driver, run `sudo ubuntu-drivers install`, reboot, then rerun
 the script.
 
-No ROS or Gazebo installation is needed on the host. Model weights (`*.gguf`,
-about 2.3 GB) are never committed; the setup scripts download and checksum them.
+No ROS or Gazebo installation is needed on the host. Every project runs the
+model, `qwen2.5vl:3b` (about 3.2 GB), in the official Ollama container. The first
+start downloads it into the Docker volume `vlm-workshop-ollama`, which all four
+projects share, so it is downloaded only once.
 
 ## Run one project at a time
 
@@ -67,7 +69,7 @@ ready almost always means another project is still running.
 ## 1. TurtleBot 4 — VLM object finder
 
 A browser instruction such as `go to the standing person` goes to a ROS 2 action
-server. The robot looks around with Qwen2-VL, locates the object with depth and
+server. The robot looks around with Qwen2.5-VL, locates the object with depth and
 TF on the warehouse map, and Nav2 drives to it.
 
 **First-time setup** (downloads the model, builds the ROS and inference images):
@@ -124,7 +126,7 @@ measurement and running against an external robot are in the
 ## 2. Unitree Go2 — VLM patrol, object waypoints, SLAM and Nav2
 
 The Go2 with the CHAMP gait in Gazebo, with keyboard/rqt teleoperation and
-warehouse Nav2/SLAM, plus a VLM patrol: the Go2 walks a Nav2 route, Qwen2-VL-2B
+warehouse Nav2/SLAM, plus a VLM patrol: the Go2 walks a Nav2 route, Qwen2.5-VL-3B
 names the objects in its D455 depth camera and marks each as a map waypoint, and
 "go to the green dumpster" sends it straight to that waypoint.
 
@@ -176,7 +178,7 @@ bash scripts/start_vlm.sh gpu   # or cpu; reuses the TurtleBot 4 model files
 ```
 
 Open <http://127.0.0.1:8000> and send `patrol`: the Go2 walks a Nav2 route,
-Qwen2-VL labels what it sees, and each object is stored as a map waypoint (listed
+Qwen2.5-VL labels what it sees, and each object is stored as a map waypoint (listed
 in the page and shown as RViz markers on `/vlm_nav/objects`). Then send e.g.
 `go to the green dumpster` and it walks to that waypoint; objects never seen on
 patrol fall back to a live search, and absent objects are refused. Model
@@ -268,7 +270,7 @@ TurtleBot `setup` step above first.
 
 ```bash
 cd ~/vlm_packt_workshop/spot_vlm_industrial_inspection
-bash scripts/spot.sh build      # first time: ROS/Gazebo + CUDA llama.cpp images
+bash scripts/spot.sh build      # first time: ROS/Gazebo image
 bash scripts/spot.sh start      # Gazebo window opens, Spot spawns standing
 bash scripts/spot.sh inspect    # walks S1..S6, asks the VLM, returns home
 ```

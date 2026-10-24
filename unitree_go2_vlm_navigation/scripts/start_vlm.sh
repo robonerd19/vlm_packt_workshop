@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start Qwen2-VL inference and the VLM object finder (browser UI on port 8000).
+# Start Qwen2.5-VL inference (Ollama) and the VLM object finder (browser UI on port 8000).
 set -euo pipefail
 
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -33,15 +33,13 @@ case "$mode" in
   cpu) ;;
   *) echo 'Mode must be gpu, cpu, or stop.' >&2; usage >&2; exit 2 ;;
 esac
-models="${MODEL_DIR:-../turtlebot4_vla_object_finder/models}"
-[[ -f "$models/Qwen2-VL-2B-Instruct-Q4_K_M.gguf" && -f "$models/mmproj-Qwen2-VL-2B-Instruct-f16.gguf" ]] || {
-  echo "Model files missing in $models. Download them with: bash ../turtlebot4_vla_object_finder/scripts/download_model.sh" >&2; exit 1; }
 
 container_id="$("${sim[@]}" ps -q go2-simulation)"
 if [[ -z "$container_id" ]] || [[ "$(docker inspect -f '{{.State.Running}}' "$container_id")" != true ]]; then
   echo 'Go2 simulation container is not running. Start the warehouse world first.' >&2
   exit 1
 fi
+echo 'Starting Ollama; the first run downloads qwen2.5vl:3b (3.2 GB).'
 "${vlm[@]}" up -d --wait inference
 
 trap cleanup_vlm EXIT INT TERM

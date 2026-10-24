@@ -10,16 +10,13 @@ device="${2:-cpu}"
 compose=(docker compose -f compose.yaml)
 if [[ "$device" == gpu ]]; then
   command -v nvidia-smi >/dev/null || { echo 'GPU mode requires NVIDIA drivers (nvidia-smi not found).' >&2; exit 1; }
-  CUDA_ARCHITECTURES="${CUDA_ARCHITECTURES:-$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | tr -d '. ' | sort -u | paste -sd ';' -)}"
-  [[ "$CUDA_ARCHITECTURES" =~ ^[0-9]+(\;[0-9]+)*$ ]] || { echo 'Invalid CUDA_ARCHITECTURES.' >&2; exit 2; }
-  export CUDA_ARCHITECTURES
   compose+=(-f compose.gpu.yaml)
 fi
 case "$command_name" in
   setup)
-    bash scripts/download_model.sh models
     "${compose[@]}" build simulation
-    "${compose[@]}" build inference ;;
+    echo 'Starting Ollama; the first run downloads qwen2.5vl:3b (3.2 GB). Progress: docker compose logs -f inference'
+    "${compose[@]}" up -d --wait --no-deps inference ;;
   start)
     # Recreate inference so a cpu/gpu switch takes effect; keep a running simulation.
     "${compose[@]}" up -d --force-recreate --no-deps inference
