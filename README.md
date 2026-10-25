@@ -12,6 +12,38 @@ README. This page tells you how to run each one on its own.
 | [spot_vlm_industrial_inspection](spot_vlm_industrial_inspection/) | Boston Dynamics Spot | Walks an inspection route and flags faults (gauges, leaks, open cabinet...) | Qwen2.5-VL-3B |
 | [spot_vlm_teleop](spot_vlm_teleop/) | Boston Dynamics Spot | Starter: drive Spot from a web page, stream its camera, ask questions and draw labelled boxes (cv_bridge + Ollama API) | Qwen2.5-VL-3B |
 
+
+## How every project gets from a camera image to a VLM answer
+
+![Pipeline: Gazebo camera, ros_gz_bridge, ROS 2 subscriber, cv_bridge, OpenCV JPEG + base64, HTTP to Ollama qwen2.5vl:3b, parse and scale the reply, then draw, navigate, grasp or report](docs/vlm_pipeline.svg)
+
+All five projects share this path. A Gazebo camera is bridged to a ROS 2
+`sensor_msgs/Image` topic; a Python node converts it with **cv_bridge** to an
+OpenCV BGR array, resizes it, encodes it as JPEG and base64, and posts it with a
+prompt to **Ollama** serving `qwen2.5vl:3b` on port 8081. The reply is plain text,
+a yes/no or a number, or JSON boxes; boxes come back in the model's own image
+size (1036x784 for a 640x480 frame) and are scaled to the camera frame. What
+happens next differs per project: draw the boxes (Spot teleop), turn them into a
+3D goal with depth and TF (TurtleBot 4, Go2, Franka), or apply a rule and write a
+report (Spot inspection). Spot inspection converts the image with NumPy instead
+of cv_bridge; the result is the same BGR array.
+
+The core of it, from [`spot_vlm_teleop`](spot_vlm_teleop/src/spot_vlm_teleop/spot_vlm_teleop/vlm.py):
+
+```python
+frame = CvBridge().imgmsg_to_cv2(msg, 'bgr8')                 # ROS Image -> OpenCV
+ok, jpeg = cv2.imencode('.jpg', cv2.resize(frame, (640, 480)))
+body = {'model': 'vlm', 'stream': False, 'options': {'temperature': 0},
+        'messages': [{'role': 'user', 'content': 'What is in front of you?',
+                      'images': [base64.b64encode(jpeg).decode()]}]}
+answer = json.loads(urllib.request.urlopen(urllib.request.Request(
+    'http://127.0.0.1:8081/api/chat', json.dumps(body).encode(),
+    {'Content-Type': 'application/json'}), timeout=120).read())['message']['content']
+```
+
+The other projects send the same image and prompt to Ollama's OpenAI-compatible
+`/v1/chat/completions` endpoint instead. Diagram source: [`docs/vlm_pipeline.dot`](docs/vlm_pipeline.dot).
+
 ## Before you start (all projects)
 
 - Ubuntu 24.04, Docker Engine and Docker Compose v2 (`docker compose version`).

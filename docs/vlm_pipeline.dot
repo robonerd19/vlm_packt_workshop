@@ -1,0 +1,45 @@
+// Render: dot -Tsvg docs/vlm_pipeline.dot -o docs/vlm_pipeline.svg
+digraph pipeline {
+  rankdir=TB; bgcolor="white"; nodesep=0.3; ranksep=0.35; newrank=true;
+  node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=11];
+  edge [color="#555555", fontname="Helvetica", fontsize=9];
+
+  subgraph cluster_sim {
+    label="Gazebo (simulation container)"; fontname="Helvetica-Bold"; fontsize=11; color="#3b8a5a"; style="rounded"; labelloc="t"; labeljust="r";
+    cam [label="Camera sensor\nRGB (+ depth)", fillcolor="#eaf6ee", color="#3b8a5a"];
+    bridge [label="ros_gz_bridge\ngz.msgs.Image -> ROS", fillcolor="#eaf6ee", color="#3b8a5a"];
+    cam -> bridge;
+  }
+
+  subgraph cluster_node {
+    label="ROS 2 Jazzy node (Python, rclpy)"; fontname="Helvetica-Bold"; fontsize=11; color="#4a6fa5"; style="rounded"; labelloc="b"; labeljust="r";
+    sub [label="Subscriber\nsensor_msgs/Image"];
+    cvb [label="cv_bridge\nimgmsg_to_cv2(msg, 'bgr8')\n-> NumPy BGR array"];
+    prep [label="OpenCV\nresize (640x480), JPEG encode\n-> base64 string"];
+    req [label="HTTP POST + prompt\n/v1/chat/completions\n(or Ollama /api/chat)"];
+    parse [label="Parse reply\ntext, yes/no, number,\nor JSON boxes"];
+    scale [label="Scale boxes to the frame\n(model works at 1036x784)"];
+    sub -> cvb -> prep -> req;
+    parse -> scale;
+  }
+
+  subgraph cluster_inf {
+    label="Ollama (inference container)"; fontname="Helvetica-Bold"; fontsize=11; color="#8a4fa5"; style="rounded"; labelloc="b"; labeljust="r";
+    vlm [label="qwen2.5vl:3b\nimage + prompt -> text", fillcolor="#f4ecf8", color="#8a4fa5"];
+  }
+
+  subgraph cluster_use {
+    label="Use the answer"; fontname="Helvetica-Bold"; fontsize=11; color="#c08a1e"; style="rounded"; labelloc="t"; labeljust="r";
+    node [fillcolor="#fff6e0", color="#c08a1e"];
+    draw [label="Draw boxes with OpenCV\ncv2_to_imgmsg -> /vlm/annotated\n(Spot teleop)"];
+    depth [label="Depth + TF -> 3D point\n-> Nav2 goal or arm target\n(TurtleBot 4, Go2, Franka)"];
+    verdict [label="Rule on the answer\n-> OK / ANOMALY report\n(Spot inspection)"];
+    web [label="Browser / ROS topics\nanswers, video, status"];
+  }
+
+  bridge -> sub [label="/camera/... topic"];
+  req -> vlm [label="JSON over HTTP\n:8081"];
+  vlm -> parse [label="reply"];
+  scale -> draw; scale -> depth; parse -> verdict;
+  draw -> web; depth -> web; verdict -> web;
+}
