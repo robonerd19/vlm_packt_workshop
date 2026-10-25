@@ -30,7 +30,7 @@ Gazebo Harmonic, and the same Ollama model service.
 
 - Ubuntu 24.04 desktop (X11 for the optional Gazebo window) with Docker Engine
   and Compose v2.
-- About 20 GB free disk and internet for the first build and the 3.2 GB model.
+- About 20 GB free disk (see [Tested environment](#tested-environment)) and internet for the first build and the 3.2 GB model.
 - GPU mode: NVIDIA driver + NVIDIA Container Toolkit. CPU mode works but each
   VLM answer takes 45–60 s instead of about 1 s.
 
@@ -54,6 +54,7 @@ Everything except the host rows runs inside Docker, so the host needs no ROS or 
 | Robot and control | Franka Panda from `moveit_resources_panda_description` 3.1.0 (no MoveIt planning), ros2_control 4.48.1, gz_ros2_control 1.2.20 |
 | Python | 3.12.3, OpenCV 4.6.0, NumPy 1.26.4, Flask 3.0.2, cv_bridge 4.1.0 |
 | VLM server | Ollama 0.40.10 (`ollama/ollama:0.40.10` image), model `qwen2.5vl:3b` (3.2 GB), port 8081 |
+| Disk space | About 16.5 GB: ROS image `franka-vlm-ros:local` 4.9 GB plus the shared Ollama image (8.4 GB) and `qwen2.5vl:3b` model volume (3.2 GB), stored once for all projects. Keep about 20 GB free for the first build. |
 
 ## Run
 

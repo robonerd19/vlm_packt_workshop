@@ -41,6 +41,7 @@ Everything except the host rows runs inside Docker, so the host needs no ROS or 
 | Robot and control | Spot model and CHAMP gait from the Spot inspection image, ros2_control 4.48.1, gz_ros2_control 1.2.20 |
 | Python | 3.12.3, OpenCV 4.6.0, NumPy 1.26.4, Flask 3.0.2, cv_bridge 4.1.0 |
 | VLM server | Ollama 0.40.10 (`ollama/ollama:0.40.10` image), model `qwen2.5vl:3b` (3.2 GB), port 8081 |
+| Disk space | About 17 GB: `spot-vlm-teleop:local` adds 34 MB to the Spot inspection image (5.2 GB), plus the shared Ollama image (8.4 GB) and `qwen2.5vl:3b` model volume (3.2 GB), stored once for all projects. With the Spot inspection project already built, it adds only about 34 MB; otherwise keep about 20 GB free. |
 
 ## Run
 

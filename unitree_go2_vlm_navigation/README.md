@@ -32,7 +32,8 @@ everything. Details: [VLM object finding](#vlm-object-finding) and
 - Ubuntu 24.04, Docker Engine, and Docker Compose v2.
 - An active X11 desktop session for the Gazebo window (`DISPLAY` and a readable
   `XAUTHORITY` file).
-- Internet access and disk space for the first Docker image build.
+- Internet access and about 25 GB free disk for the first Docker image build and the model
+  (see [Tested environment](#tested-environment)).
 - For GPU mode: a compatible NVIDIA driver and working Docker GPU support via
   NVIDIA Container Toolkit.
 
@@ -60,6 +61,7 @@ Everything except the host rows runs inside Docker, so the host needs no ROS or 
 | Robot and navigation | Go2 with the CHAMP gait (upstream commit in [UPSTREAM.md](UPSTREAM.md)), ros2_control 4.48.1, gz_ros2_control 1.2.20, robot_localization 3.8.3, Nav2 1.3.13, slam_toolbox 2.8.5 |
 | Python | 3.12.3, OpenCV 4.6.0, NumPy 1.26.4, Flask 3.0.2, cv_bridge 4.1.0 |
 | VLM server | Ollama 0.40.10 (`ollama/ollama:0.40.10` image), model `qwen2.5vl:3b` (3.2 GB), port 8081 |
+| Disk space | About 19 GB: image `unitree-go2-sim:jazzy` 7.2 GB plus the shared Ollama image (8.4 GB) and `qwen2.5vl:3b` model volume (3.2 GB), stored once for all projects; this folder 47 MB. Keep about 25 GB free for the first build. |
 
 ## Build and run
 

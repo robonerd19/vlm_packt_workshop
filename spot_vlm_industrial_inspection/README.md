@@ -58,6 +58,7 @@ Everything except the host rows runs inside Docker, so the host needs no ROS or 
 | Robot and control | Spot model and CHAMP gait (sources in [UPSTREAM.md](UPSTREAM.md)), ros2_control 4.48.1, gz_ros2_control 1.2.20, robot_localization 3.8.3 |
 | Python | 3.12.3, OpenCV 4.6.0, NumPy 1.26.4, cv_bridge 4.1.0 |
 | VLM server | Ollama 0.40.10 (`ollama/ollama:0.40.10` image), model `qwen2.5vl:3b` (3.2 GB), port 8081 |
+| Disk space | About 17 GB: ROS image `spot-inspection-ros:local` 5.2 GB plus the shared Ollama image (8.4 GB) and `qwen2.5vl:3b` model volume (3.2 GB), stored once for all projects; this folder 30 MB. Keep about 20 GB free for the first build. |
 
 ## Run
 

@@ -49,6 +49,7 @@ Everything except the host rows runs inside Docker, so the host needs no ROS or 
 | Robot and navigation | TurtleBot 4 Standard description 2.1.1, Nav2 1.3.13, slam_toolbox 2.8.5, gz_ros2_control 1.2.20 |
 | Python | 3.12.3, OpenCV 4.6.0, NumPy 1.26.4, Flask 3.0.2, cv_bridge 4.1.0 |
 | VLM server | Ollama 0.40.10 (`ollama/ollama:0.40.10` image), model `qwen2.5vl:3b` (3.2 GB), port 8081 |
+| Disk space | About 17.5 GB: ROS image `vlm-workshop-ros:local` 5.8 GB plus the shared Ollama image (8.4 GB) and `qwen2.5vl:3b` model volume (3.2 GB), stored once for all projects. Keep 25-30 GB free for the first build (Docker build cache, warehouse asset downloads). |
 
 ## First-time Docker setup
 

@@ -15,7 +15,20 @@ README. This page tells you how to run each one on its own.
 ## Before you start (all projects)
 
 - Ubuntu 24.04, Docker Engine and Docker Compose v2 (`docker compose version`).
-- About 30 GB free disk for images and model files; internet for the first build.
+- Disk space, measured: each project needs about 16.5-19 GB (its ROS image plus the
+  shared Ollama image, 8.4 GB, and `qwen2.5vl:3b` model, 3.2 GB, both stored once).
+  All five together use about 32 GB, because the Ollama image, the model and the
+  `ros:jazzy-ros-base` layers are shared and Spot teleop builds on the Spot image.
+  Keep about 40 GB free for building all five (Docker build cache);
+  `docker builder prune` reclaims the cache afterwards. Internet for the first build.
+
+  | Project | Its own image | With shared Ollama image + model |
+  |---|---|---|
+  | TurtleBot 4 | 5.8 GB | about 17.5 GB |
+  | Unitree Go2 | 7.2 GB | about 19 GB |
+  | Franka Panda | 4.9 GB | about 16.5 GB |
+  | Spot inspection | 5.2 GB | about 17 GB |
+  | Spot teleop | +34 MB on the Spot inspection image | about 17 GB (34 MB if Spot inspection is built) |
 - For a Gazebo window: a local X11 desktop session (`DISPLAY` and `XAUTHORITY` set).
 - For GPU mode: an NVIDIA driver (`nvidia-smi` works) and
   [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
