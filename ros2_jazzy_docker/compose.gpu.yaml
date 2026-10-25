@@ -1,0 +1,10 @@
+# NVIDIA overlay: GPU rendering for RViz/Gazebo.
+services:
+  ros2:
+    environment:
+      LIBGL_ALWAYS_SOFTWARE: '0'
+      NVIDIA_DRIVER_CAPABILITIES: all
+    deploy:
+      resources:
+        reservations:
+          devices: [{driver: nvidia, count: all, capabilities: [gpu]}]

@@ -1,0 +1,31 @@
+# One ROS 2 Jazzy dev container: ./src is mounted into /ros2_ws/src, build output stays in a volume.
+services:
+  ros2:
+    image: ros2-jazzy:local
+    build: .
+    container_name: ros2-jazzy
+    network_mode: host
+    ipc: host
+    init: true
+    shm_size: 1gb
+    stdin_open: true
+    tty: true
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      FASTDDS_BUILTIN_TRANSPORTS: UDPv4
+      DISPLAY: ${DISPLAY:-:0}
+      XAUTHORITY: /tmp/ros2.xauthority
+      QT_QPA_PLATFORM: xcb
+      LIBGL_ALWAYS_SOFTWARE: ${LIBGL_ALWAYS_SOFTWARE:-1}
+    volumes:
+      - ./src:/ros2_ws/src
+      - ros2_build:/ros2_ws/build
+      - ros2_install:/ros2_ws/install
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ${HOST_XAUTHORITY:-/dev/null}:/tmp/ros2.xauthority:ro
+    command: [sleep, infinity]
+
+volumes:
+  ros2_build:
+  ros2_install:
