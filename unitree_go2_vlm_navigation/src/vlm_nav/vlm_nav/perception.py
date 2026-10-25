@@ -132,7 +132,8 @@ def identity_matches(label, instruction):
         'table desk', 'shelf shelves shelving rack racks',
         'box boxes crate crates carton container', 'pallet pallets',
         'cart trolley', 'door doorway', 'forklift', 'barrel drum',
-        'extinguisher', 'bin trashcan', 'cone')]
+        # qwen2.5vl:3b lists the green dumpster as "green trash bin" and its text check then rejected it.
+        'extinguisher', 'bin trashcan trash dumpster garbage waste container', 'cone')]
     target = set(re.findall(r'[a-z]+', instruction.lower()))
     observed = set(re.findall(r'[a-z]+', label.lower()))
     requested = [group for group in groups if group & target]
@@ -226,7 +227,10 @@ class InferenceClient:
             raise PerceptionError('Unable to encode the camera image.')
         # This wording was measured to return labelled boxes; "list up to N
         # objects a robot could drive to" made the 2B model return none.
-        prompt = ('What objects are in this warehouse image? Give each object a bounding box. '
+        # Color-first labels: without them the 3B model called the green dumpster "truck" or
+        # "trash can", and memory recall needs the named color in the label.
+        prompt = ('What objects are in this warehouse image? '
+                  'Give each object a bounding box and a short label that starts with its color. '
                   'Output JSON {"objects":[{"label":"...","bbox_2d":[x1,y1,x2,y2]}]} '
                   'in pixel coordinates of the image.')
         # The model may repeat one entry until the token limit and writes "bbox_2d" in

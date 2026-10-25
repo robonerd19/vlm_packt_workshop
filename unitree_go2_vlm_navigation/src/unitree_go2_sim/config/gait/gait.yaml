@@ -3,7 +3,8 @@
     gait:
       knee_orientation : ">>"
       pantograph_leg : false
-      odom_scaler: 0.9
+      # Position-command gait under Nav2: Gazebo ground truth ran 1.11x the leg odometry at 1.05.
+      odom_scaler: 1.16
       # Sim-time sweep: tracks commands to 0.7 m/s, but body tilt rises above
       # 0.6. The Go2 hardware rating is not a target for this fixed-cadence gait.
       max_linear_velocity_x : 0.6

@@ -3,7 +3,9 @@ from vlm_nav.perception import identity_matches
 
 def test_named_color_rejects_any_class_before_text_comparison():
     assert identity_matches('green object with wheels', 'go to the blue sofa') is False
-    assert identity_matches('green object with wheels', 'go to the green dumpster') is None
+    assert identity_matches('green object with wheels', 'go to the green tractor') is None
+    assert identity_matches('green trash bin', 'go to the green dumpster') is True
+    assert identity_matches('green boxes', 'go to the green dumpster') is False
     assert identity_matches('object with wheels', 'go to the blue sofa') is None
 
 
@@ -39,4 +41,6 @@ def test_memory_match_requires_the_named_color():
     asked = []
     client.complete = lambda _jpeg, prompt, *_a, **_k: asked.append(prompt) or '{"index":2}'
     assert client.match_memory(['boxes', 'yellow boxes', 'green trash bin'], 'go to the green dumpster') == 2
+    assert not asked  # an exact class and color match needs no model call
+    assert client.match_memory(['boxes', 'yellow boxes', 'green thing'], 'go to the green sofa') == 2
     assert 'boxes;' not in asked[0] and '0: boxes' not in asked[0]

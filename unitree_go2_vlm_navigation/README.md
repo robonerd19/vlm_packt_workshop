@@ -81,10 +81,17 @@ The legs use position commands (`command_interface:=position`, matching
 the warehouse, body roll/pitch rate RMS was about 12/15 deg/s with position
 commands versus 48-55/39-44 deg/s with the original effort PID (p 100, d 1), and
 roll stayed within about ±0.7° instead of ±2.8°. The trade-off: the robot reaches
-only about 0.3 m/s for a 0.5 m/s command, and Nav2 needed recovery behaviours
-near some goals (three test goals took 37-294 s versus 31-48 s with effort
-control). Launch with `command_interface:=effort` and set `command_interfaces`
-back to `effort` in that file to compare.
+only about 0.3 m/s for a 0.5 m/s command. Launch with `command_interface:=effort`
+and set `command_interfaces` back to `effort` in that file to compare.
+
+With this gait the leg odometry under-reported forward distance: Gazebo ground
+truth ran 1.11x `/odom` at `odom_scaler: 1.05`, so `config/gait/gait.yaml` uses
+1.16 (0.98-1.06x on a 9-goal route through both halves of the warehouse; turning
+was already accurate). On that route AMCL stayed within 0.51 m of ground truth.
+Nav2 used to stall 0.20-0.25 m from goals: DWB's RotateToGoal critic defaults to
+a 0.25 m tolerance and only allows rotation inside it, while the goal checker
+needs 0.20 m, so the robot turned in place until the progress checker aborted.
+`FollowPath.xy_goal_tolerance: 0.20` in `nav2_params.yaml` makes them agree.
 
 `start` also builds the image if it is missing or needs rebuilding. CPU mode uses
 Mesa software rendering and disables the D455 depth camera and two 3D lidars to
@@ -261,25 +268,33 @@ label), it falls back to the live search described above. Memory lasts until the
 navigator restarts. Boxes clipped by the image edge, floor markings, and walls
 are not stored.
 
-Measured in GPU mode (RTX 4060 Laptop GPU), four patrol points with six views each:
+Measured in GPU mode (RTX 4060 Laptop GPU) with `qwen2.5vl:3b`, four patrol
+points with six views each, starting from a fresh launch:
 
 | Instruction | Result | Time |
 |---|---|---|
-| `patrol` | 24 views, 12 objects remembered; the dumpster stored as "green bin" at (-1.05, 7.5), about 0.5 m from its model origin | 562 s |
-| `go to the green dumpster` | matched "green bin" from memory, walked to its waypoint, ended facing the dumpster | 58 s |
-| `go to the yellow metal rack` (earlier 4-view patrol) | matched "yellow metal racks", arrived 0.26 m from the stored pose | 27 s |
-| `go to the pallet truck` | wrong object: "pallet" matched the remembered "pallets" stack, not the pallet jack (stored as "forklift") | 29 s |
-| `go to the blue sofa` (earlier patrol) | no remembered match, live search refused it after 30 views | 536 s |
+| `patrol` | 24 views, 16 objects remembered; the dumpster stored as "green dumpster" at (-1.07, 7.44), about 0.6 m from its model origin | 375 s |
+| `go to the green dumpster` | matched "green dumpster" from memory, walked to its waypoint, ended at (-0.21, 6.35) facing the dumpster | 56 s |
 
-Limits seen while testing: the 2B model sometimes names the same object
-differently ("green bin", "green truck") or invents labels for a box stack
-("forklift", "pallets"), so check the remembered list before demoing an object.
-With four views per point, the dumpster was clipped at the image edge and
-stored 2.9 m away inside a wall, which is why patrol now skips clipped boxes
-and uses six views. At temperature 0 the model can repeat one entry until its
-token limit; complete entries are still read from the truncated reply. AMCL
-drifted about 2 m in the long south aisle, so the patrol points stay in the
-north half.
+Earlier patrol runs with the Qwen2-VL-2B model (not repeated with the 3B model):
+
+| Instruction | Result | Time |
+|---|---|---|
+| `go to the yellow metal rack` | matched "yellow metal racks", arrived 0.26 m from the stored pose | 27 s |
+| `go to the pallet truck` | wrong object: "pallet" matched the remembered "pallets" stack, not the pallet jack (stored as "forklift") | 29 s |
+| `go to the blue sofa` | no remembered match, live search refused it after 30 views | 536 s |
+
+Limits seen while testing: patrol labels vary between views. Without a color in
+the prompt the 3B model called the dumpster "truck" (with a box past the image
+edge) or "trash can", and recall then failed because a named color must be in the
+remembered label. The patrol prompt therefore asks for labels that start with the
+color, and `identity_matches` treats dumpster, trash, bin and container as one
+class. The model still invents labels for some box stacks ("bar code", "green
+cone"), so check the remembered list before demoing an object. Patrol skips boxes
+clipped by the image edge: with four views per point the clipped dumpster was
+stored 2.9 m away inside a wall. At temperature 0 the model can repeat one entry
+until its token limit; complete entries are still read from the truncated reply.
+AMCL stayed within 0.71 m of Gazebo ground truth through the patrol above.
 
 **CPU mode** has no depth camera by default. Enable the D455 and the Velodyne
 explicitly, and use CPU inference (each VLM answer then takes 45–60 s instead
@@ -296,7 +311,8 @@ The plain `/rgb_image` camera has no depth and is not used for object finding.
 CPU mode was not tested end to end; the GPU results below were.
 
 Measured in the warehouse world, GPU mode (RTX 4060 Laptop GPU), robot starting
-at the origin:
+at the origin, with Qwen2-VL-2B before the odometry and DWB fixes above (not
+repeated with the 3B model; on saved frames it boxes the dumpster correctly):
 
 | Instruction | Result | Time | Views | Robot end (Gazebo x, y) |
 |---|---|---|---|---|
@@ -310,7 +326,8 @@ most of the time is the Go2 turning and walking between views (Gazebo runs below
 real time). Limits seen in testing: the 2B model's text-only identity check once
 accepted `blue sofa` for a green bin, so a named color that the candidate's
 label visibly lacks now rejects it before that check (`identity_matches` in
-`src/vlm_nav/vlm_nav/perception.py`, the one change to the TurtleBot logic
-besides `camera_frame`). AMCL can drift: after one `go home` the robot was
-about 1.6 m from the true origin. When the robot starts wedged next to a rack,
-the search can skip viewpoints it cannot reach and miss the target.
+`src/vlm_nav/vlm_nav/perception.py`; this, the dumpster class words and the
+color-first patrol prompt differ from the TurtleBot copy). Before the odometry
+fix, one `go home` ended about 1.6 m from the true origin. When the robot starts
+wedged next to a rack, the search can skip viewpoints it cannot reach and miss
+the target.
