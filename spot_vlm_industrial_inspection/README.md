@@ -84,12 +84,19 @@ docker compose -p spot-vlm-inspection exec simulation bash -lc \
 ### Without Docker (host ROS 2 Jazzy)
 
 ```bash
+sudo apt install python3-colcon-common-extensions ros-jazzy-ros-gz ros-jazzy-gz-ros2-control \
+  ros-jazzy-ros2-controllers ros-jazzy-robot-localization ros-jazzy-robot-state-publisher \
+  ros-jazzy-xacro ros-jazzy-urdf ros-jazzy-teleop-twist-keyboard
 colcon build --symlink-install --base-paths src upstream --cmake-args -DBUILD_TESTING=OFF
 source install/setup.bash
 ros2 launch spot_inspection_sim sim.launch.py
 # second terminal, with an OpenAI-compatible VLM server (e.g. Ollama) on :8081
 ros2 launch spot_inspection inspection.launch.py report_dir:=$PWD/reports
 ```
+
+`sim.launch.py` sets `GZ_IP=127.0.0.1` unless you set it yourself; without it the
+Gazebo server hung before loading the world on a Wi-Fi laptop (black window). For
+`gz` commands in another terminal, `export GZ_IP=127.0.0.1` first.
 
 ## How it works
 

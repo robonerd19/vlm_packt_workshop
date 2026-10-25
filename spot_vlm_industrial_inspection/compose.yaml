@@ -9,6 +9,7 @@ x-ros: &ros
     ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-91}
     RMW_IMPLEMENTATION: rmw_fastrtps_cpp
     FASTDDS_BUILTIN_TRANSPORTS: UDPv4
+    GZ_IP: 127.0.0.1  # gz-transport on loopback; see sim.launch.py
 
 services:
   inference:
