@@ -38,11 +38,11 @@ stations:
     x: 20.0
     y: 0.0
     yaw: 90
-    question: Is the electrical cabinet door open? Answer yes or no.
+    question: Is the cabinet door open so that the wiring inside is visible? Answer yes or no.
     anomaly_if: 'yes'
   - name: S6 emergency exit
     x: 23.5
     y: 0.0
     yaw: 0
-    question: Are boxes blocking the door? Answer yes or no.
+    question: Are there cardboard boxes in front of the exit door? Answer yes or no.
     anomaly_if: 'yes'

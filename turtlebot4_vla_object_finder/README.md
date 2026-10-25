@@ -11,6 +11,10 @@ The default simulation uses the official TurtleBot 4 Standard robot and
 warehouse environment. The original small-room demo remains selectable. See
 [validation](docs/validation.md) for measured RAM, latency, and test boundaries.
 
+![Browser UI during a search: robot camera, instruction, progress and the VLM's scene description](docs/web_ui.jpg)
+
+![Architecture: browser, application container (web bridge, navigator, Nav2), simulation container, Ollama container](docs/architecture.svg)
+
 ## Prerequisites
 
 - Linux Docker Engine and Docker Compose; permission to run Docker.
@@ -40,9 +44,9 @@ It uses Docker Compose v2 (`docker compose`).
 cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
 
 # Choose one setup mode. Re-running setup reuses the downloaded model.
+bash scripts/workshop.sh setup gpu   # NVIDIA GPU (recommended)
+# Or, without an NVIDIA GPU:
 bash scripts/workshop.sh setup cpu
-# Or, on a supported NVIDIA machine:
-bash scripts/workshop.sh setup gpu
 ```
 
 The first setup needs internet access and about 30 GB of free disk space. GPU
@@ -62,9 +66,9 @@ before switching devices:
 cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
 
 # Start either mode
-bash scripts/workshop.sh start cpu
+bash scripts/workshop.sh start gpu   # recommended
 # Or:
-bash scripts/workshop.sh start gpu
+bash scripts/workshop.sh start cpu
 
 # Stop workshop containers and the optional Gazebo GUI
 bash scripts/workshop.sh stop

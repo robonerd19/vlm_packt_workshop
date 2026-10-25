@@ -1,0 +1,31 @@
+// Render: dot -Tsvg docs/architecture.dot -o docs/architecture.svg
+digraph spot_inspection {
+  rankdir=LR; bgcolor="white"; nodesep=0.35; ranksep=0.55;
+  node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=11];
+  edge [color="#555555", fontname="Helvetica", fontsize=9];
+
+  subgraph cluster_sim {
+    label="simulation container (spot.sh start)"; fontname="Helvetica-Bold"; fontsize=11; color="#3b8a5a"; style="rounded"; labelloc="t";
+    gz [label="Gazebo Harmonic\nSpot in the industrial plant\nstations S1-S6", fillcolor="#eaf6ee", color="#3b8a5a"];
+    champ [label="CHAMP gait + ros2_control\n/cmd_vel -> leg joints", fillcolor="#eaf6ee", color="#3b8a5a"];
+    bridge [label="ros_gz_bridge\n/inspection_camera/image\n/odom/ground_truth, IMU, clock", fillcolor="#eaf6ee", color="#3b8a5a"];
+  }
+  subgraph cluster_insp {
+    label="inspector container (spot.sh inspect)"; fontname="Helvetica-Bold"; fontsize=11; color="#4a6fa5"; style="rounded"; labelloc="b";
+    route [label="route.yaml\nstation pose + question", shape=note, fillcolor="#ffffff"];
+    insp [label="inspector.py\nwalk to station, face asset,\ncapture, ask VLM, verdict"];
+  }
+  subgraph cluster_inf {
+    label="inference container"; fontname="Helvetica-Bold"; fontsize=11; color="#8a4fa5"; style="rounded"; labelloc="b";
+    ollama [label="Ollama :8081\nqwen2.5vl:3b", fillcolor="#f4ecf8", color="#8a4fa5"];
+  }
+  out [label="/inspection/report (String)\nreports/<time>/report.md,\nresults.json, images", shape=note, fillcolor="#fff6e0", color="#c08a1e"];
+
+  gz -> champ [label="joint states, IMU", dir=both];
+  gz -> bridge;
+  bridge -> insp [label="camera, pose"];
+  insp -> champ [label="/cmd_vel"];
+  route -> insp;
+  insp -> ollama [label="image + question\n-> answer", dir=both];
+  insp -> out;
+}

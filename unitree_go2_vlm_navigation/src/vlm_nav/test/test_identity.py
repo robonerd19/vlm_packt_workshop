@@ -44,3 +44,13 @@ def test_memory_match_requires_the_named_color():
     assert not asked  # an exact class and color match needs no model call
     assert client.match_memory(['boxes', 'yellow boxes', 'green thing'], 'go to the green sofa') == 2
     assert 'boxes;' not in asked[0] and '0: boxes' not in asked[0]
+
+
+def test_project_box_skips_a_thin_occluder_at_the_box_edge():
+    import numpy as np
+    from vlm_nav.perception import project_box
+    depth = np.full((100, 100), 6.0, np.float32)   # wall
+    depth[20:80, 20:70] = 3.6                      # object filling the box centre
+    depth[:, 70:80] = 2.1                          # sliver of a nearer box at the right edge
+    xyz = project_box((10, 10, 80, 90), depth, (50.0, 50.0, 50.0, 50.0))
+    assert abs(xyz[2] - 3.6) < 0.05

@@ -5,7 +5,27 @@ with Docker setup and run/stop commands for ROS 2 Jazzy and Gazebo Harmonic.
 The Go2-specific packages are in `src/`; the CHAMP packages are retained under
 `upstream/unitree_go2_ros2/`.
 The upstream launch starts Gazebo, spawns the Go2, starts the CHAMP gait and
-state-estimation nodes, and bridges the simulated sensors.
+state-estimation nodes, and bridges the simulated sensors. On top of that it adds
+warehouse Nav2/SLAM and VLM object finding: the Go2 patrols the warehouse,
+remembers the objects Qwen2.5-VL-3B sees as map waypoints, and walks to one on
+request.
+
+![Browser UI during a patrol: camera, remembered objects and patrol progress](docs/web_ui.jpg)
+
+![Architecture: simulation container with Gazebo, CHAMP, Nav2 and the VLM navigator; Ollama container](docs/architecture.svg)
+
+**Quick start (NVIDIA GPU)** — run each command in its own terminal, from this folder:
+
+```bash
+GO2_PUBLISH_MAP_TO_ODOM=false bash scripts/go2_sim.sh start gpu warehouse
+bash scripts/start_nav2.sh nav2          # after the Go2 stands
+bash scripts/start_vlm.sh gpu            # Ollama VLM on 8081, web UI on 8000
+```
+
+Open <http://127.0.0.1:8000>, wait for ready, send `patrol`, then
+`go to the green dumpster` and `go home`. `bash scripts/go2_sim.sh stop` stops
+everything. Details: [VLM object finding](#vlm-object-finding) and
+[Patrol and object waypoints](#patrol-and-object-waypoints); CPU mode is below.
 
 ## Requirements
 
@@ -273,8 +293,8 @@ points with six views each, starting from a fresh launch:
 
 | Instruction | Result | Time |
 |---|---|---|
-| `patrol` | 24 views, 16 objects remembered; the dumpster stored as "green dumpster" at (-1.07, 7.44), about 0.6 m from its model origin | 375 s |
-| `go to the green dumpster` | matched "green dumpster" from memory, walked to its waypoint, ended at (-0.21, 6.35) facing the dumpster | 56 s |
+| `patrol` | 24 views, 15 objects remembered; the dumpster stored twice, as "green trash bin" at (-1.24, 7.36) from point 2 and "green dumpster" at (-1.66, 7.28) from point 3, within 0.5 m of its model origin | 380 s |
+| `go to the green dumpster` | matched "green dumpster" from memory, walked to its waypoint, ended facing the dumpster | 46 s |
 
 Earlier patrol runs with the Qwen2-VL-2B model (not repeated with the 3B model):
 
@@ -290,7 +310,10 @@ edge) or "trash can", and recall then failed because a named color must be in th
 remembered label. The patrol prompt therefore asks for labels that start with the
 color, and `identity_matches` treats dumpster, trash, bin and container as one
 class. The model still invents labels for some box stacks ("bar code", "green
-cone"), so check the remembered list before demoing an object. Patrol skips boxes
+cone"), so check the remembered list before demoing an object. When a nearer object fills only an edge
+of a box (a carton in front of the dumpster), depth placement falls back to the depth
+at the box centre; before that, the point-3 view of the dumpster was always rejected
+and one patrol stored no dumpster at all. Patrol skips boxes
 clipped by the image edge: with four views per point the clipped dumpster was
 stored 2.9 m away inside a wall. At temperature 0 the model can repeat one entry
 until its token limit; complete entries are still read from the truncated reply.

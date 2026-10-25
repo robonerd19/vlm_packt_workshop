@@ -1,0 +1,42 @@
+// Render: dot -Tsvg docs/architecture.dot -o docs/architecture.svg
+digraph go2 {
+  rankdir=LR; bgcolor="white"; nodesep=0.35; ranksep=0.55;
+  node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=11];
+  edge [color="#555555", fontname="Helvetica", fontsize=9];
+
+  browser [label="Browser\nhttp://127.0.0.1:8000\ncamera, instruction, remembered objects", fillcolor="#fff6e0", color="#c08a1e"];
+
+  subgraph cluster_sim {
+    label="go2-simulation container (ROS 2 Jazzy)"; fontname="Helvetica-Bold"; fontsize=11; color="#4a6fa5"; style="rounded"; labelloc="b";
+    subgraph cluster_gz {
+      label="go2_sim.sh start gpu warehouse"; fontname="Helvetica"; fontsize=10; color="#3b8a5a"; style="dashed,rounded"; labelloc="t"; labeljust="r";
+      gz [label="Gazebo Harmonic\nGo2 in the AWS warehouse\nD455 RGB-D, Velodyne", fillcolor="#eaf6ee", color="#3b8a5a"];
+      champ [label="CHAMP gait + ros2_control\n/cmd_vel -> leg joints\nleg odometry + IMU EKF -> /odom", fillcolor="#eaf6ee", color="#3b8a5a"];
+    }
+    subgraph cluster_nav {
+      label="start_nav2.sh nav2"; fontname="Helvetica"; fontsize=10; color="#4a6fa5"; style="dashed,rounded"; labelloc="t"; labeljust="r";
+      scan [label="pointcloud_to_laserscan\nVelodyne -> /scan"];
+      nav2 [label="Nav2 (DWB) + AMCL\nwarehouse map"];
+    }
+    subgraph cluster_vlm {
+      label="start_vlm.sh gpu"; fontname="Helvetica"; fontsize=10; color="#4a6fa5"; style="dashed,rounded"; labelloc="t"; labeljust="r";
+      web [label="vlm_nav_web\nFlask: /video_feed, /infer, /status"];
+      nav [label="vlm_nav navigator\npatrol memory, live search,\ndepth + TF -> map goal"];
+    }
+  }
+  subgraph cluster_inf {
+    label="inference container"; fontname="Helvetica-Bold"; fontsize=11; color="#8a4fa5"; style="rounded"; labelloc="b";
+    ollama [label="Ollama :8081\nqwen2.5vl:3b", fillcolor="#f4ecf8", color="#8a4fa5"];
+  }
+
+  browser -> web [label="HTTP + MJPEG", dir=both];
+  web -> nav [label="ROS action", dir=both];
+  nav -> ollama [label="image + prompt\n-> labels, boxes", dir=both];
+  gz -> champ [label="joint states, IMU", dir=both];
+  gz -> scan [label="point cloud"];
+  scan -> nav2 [label="/scan"];
+  champ -> nav2 [label="/odom, TF"];
+  gz -> nav [label="D455 RGB-D"];
+  nav -> nav2 [label="navigate_to_pose", dir=both];
+  nav2 -> champ [label="/cmd_vel"];
+}

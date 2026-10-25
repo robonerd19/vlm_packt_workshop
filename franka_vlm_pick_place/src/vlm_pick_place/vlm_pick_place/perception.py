@@ -139,7 +139,9 @@ class InferenceClient:
             'table with its color and type. Return only JSON: {"objects":["red cube", ...]}.'), 128)
         try:
             objects = _json(text)['objects']
-            if not isinstance(objects, list) or not all(isinstance(o, str) for o in objects):
+            # qwen2.5vl:3b sometimes answers [{"color":"yellow","type":"square"}] instead of strings.
+            objects = [' '.join(str(v) for v in o.values()) if isinstance(o, dict) else o for o in objects]
+            if not all(isinstance(o, str) for o in objects):
                 raise ValueError
             return [o.strip()[:60] for o in objects if o.strip()][:12]
         except (ValueError, KeyError, TypeError) as exc:

@@ -12,7 +12,9 @@ Ollama (OpenAI-compatible API). Everything runs in Docker.
 
 ## Plant and route
 
-![Inspection camera at S1-S6](docs/stations.jpg)
+![Inspection camera at S1-S6 with each verdict from a Qwen2.5-VL-3B run](docs/stations.jpg)
+
+![Architecture: simulation container (Gazebo, CHAMP, bridge), inspector container, Ollama container](docs/architecture.svg)
 
 | Station | Asset | Planted fault |
 |---|---|---|
@@ -93,19 +95,28 @@ ros2 launch spot_inspection inspection.launch.py report_dir:=$PWD/reports
 
 ## Results
 
-On an RTX 4060 laptop each VLM answer takes about 1 s; a full route is about
-2.5 minutes of walking. With the final questions, two consecutive Docker runs
-flagged all five faults and passed the healthy S2 gauge (6/6 both times); a
-sample is in [docs/sample_report](docs/sample_report/report.md). Each
-question was checked against fault-free control frames (S2's healthy gauge, a
-closed cabinet at x=17 and a stocked extinguisher at x=18.5 in the world).
-Those runs used Qwen2-VL-2B; with Qwen2.5-VL-3B on Ollama the same questions
-also scored 6/6 in one run (S1 read as 8 bar, S2 as 4 bar), at 1–3 s per answer.
+On an RTX 4060 laptop (GPU mode) each VLM answer takes 1-3 s and a full route
+takes about 4.5 minutes, mostly walking. With `qwen2.5vl:3b` on Ollama and the
+questions in `route.yaml`, the latest run flagged all five faults and passed the
+healthy S2 gauge (6/6, S1 read as 8 bar, S2 as 4 bar); that run is in
+[docs/sample_report](docs/sample_report/report.md).
+
+The S5 and S6 questions were reworded after a run in which the 3B model answered
+"no" to "Is the electrical cabinet door open?" and "Are boxes blocking the door?"
+although both faults were in full view (4/6). Checked live against the closed
+control cabinet at x=17: "Is the cabinet door open so that the wiring inside is
+visible?" answered no in 2 of 3 runs and yes on the open S5 cabinet every time;
+"Can you see red, blue and yellow wires?" also fired on the closed cabinet (the
+overhead pipes are coloured), so it was not used. The world also has a stocked
+extinguisher at x=18.5 as a control for S4. There is no unblocked exit to test S6
+against; the S6 question answered no on the S1-S4 frames.
 
 ## Limits
 
-- The earlier Qwen2-VL-2B model was small and sensitive to wording and even JPEG re-encoding:
-  earlier phrasings missed the leak or the open cabinet on some runs. The
+- Small VLMs are sensitive to wording and even JPEG re-encoding: the same S5
+  question gave different answers on a frame and on its saved JPEG, and earlier
+  phrasings missed the leak or the open cabinet on some runs. Expect an occasional
+  false ANOMALY at S5. The
   faults are deliberately large and high-contrast, and the descriptions in the
   report can be wrong (e.g. "7 bar" for a 3.8 bar gauge) even when the
   verdict is right. Swap in a larger VLM by pointing

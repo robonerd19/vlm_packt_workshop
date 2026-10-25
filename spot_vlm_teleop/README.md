@@ -46,13 +46,7 @@ unless another project already did. `bash scripts/teleop.sh logs` shows progress
 
 ## How it works
 
-```
-Gazebo camera ─► ros_gz_bridge ─► /inspection_camera/image ─► cv_bridge ─► OpenCV frame (BGR)
-                                                                   ├─► JPEG ─► /video (MJPEG) ─► browser
-                                                                   └─► JPEG + base64 + prompt ─► Ollama /api/chat
-browser buttons ─► POST /drive ─► /cmd_vel ─► CHAMP gait ─► Spot walks          │
-browser Ask/Detect ◄── answer, boxes drawn with OpenCV ◄───────────────────────┘
-```
+![Architecture: simulation, web node with cv_bridge and Flask, and Ollama containers](docs/architecture.svg)
 
 Two files hold all the logic:
 

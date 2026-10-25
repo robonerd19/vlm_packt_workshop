@@ -93,17 +93,27 @@ def project_box(box, depth, intrinsic, max_depth=8.0):
     if valid.size < max(12, roi.size // 5):
         raise PerceptionError('Insufficient valid depth at the detected object.')
     # A percentile ignores isolated closer noise while retaining object surfaces
-    # that cover a minority of a box containing gaps/background.
-    near = float(np.percentile(valid, 20))
-    band = max(0.10, near * 0.05)
-    mask = (valid_mask & (np.abs(roi-near) <= band)).astype(np.uint8)
-    count, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
-    if count <= 1:
-        raise PerceptionError('No coherent foreground depth surface.')
-    component = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
-    area = int(stats[component, cv2.CC_STAT_AREA])
-    if area < max(12, valid.size * 0.08):
-        raise PerceptionError('No sufficiently large coherent foreground depth surface.')
+    # that cover a minority of a box containing gaps/background. If that nearest
+    # surface is only a sliver (a box in front of the dumpster at the box edge),
+    # use the depth at the box centre instead.
+    h_roi, w_roi = roi.shape
+    centre = roi[h_roi//4:h_roi*3//4, w_roi//4:w_roi*3//4]
+    centre = centre[np.isfinite(centre) & (centre > 0.15) & (centre < max_depth)]
+    candidates = [float(np.percentile(valid, 20))] + ([float(np.median(centre))] if centre.size else [])
+    error = 'No coherent foreground depth surface.'
+    for near in candidates:
+        band = max(0.10, near * 0.05)
+        mask = (valid_mask & (np.abs(roi-near) <= band)).astype(np.uint8)
+        count, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+        if count <= 1:
+            continue
+        component = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
+        area = int(stats[component, cv2.CC_STAT_AREA])
+        if area >= max(12, valid.size * 0.08):
+            break
+        error = 'No sufficiently large coherent foreground depth surface.'
+    else:
+        raise PerceptionError(error)
     rows, columns = np.nonzero(labels == component)
     centre_x, centre_y = (x1+x2)/2-left, (y1+y2)/2-top
     index = int(np.argmin((columns-centre_x)**2 + (rows-centre_y)**2))

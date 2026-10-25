@@ -10,10 +10,12 @@ Gazebo Harmonic, and the same Ollama model service.
 
 ## Pipeline
 
+![Architecture: browser, application container (pick_place_node, IK), simulation container, Ollama container](docs/architecture.svg)
+
 1. **Scene understanding** — the VLM lists the objects on the table (shown in the UI).
 2. **Instruction parsing** — the VLM extracts the object to pick and the destination.
 3. **Grounding** — the VLM returns a 0..1000 box for each phrase. A box whose pixels
-   do not have the colour the phrase names is rejected: the 2B model tends to box the
+   do not have the colour the phrase names is rejected: small VLMs tend to box the
    nearest object instead of saying "not visible".
 4. **3D** — the nearest coherent depth surface in each box is back-projected and
    transformed with the known camera pose (`description.py`, matching the world SDF).
@@ -39,11 +41,19 @@ Install Docker, Compose v2 and the NVIDIA Container Toolkit with
 
 ```bash
 cd ~/vlm_packt_workshop/franka_vlm_pick_place
-bash scripts/workshop.sh setup cpu   # or: setup gpu  (builds the ROS image, downloads the 3.2 GB model once)
-bash scripts/workshop.sh start cpu   # or: start gpu
+bash scripts/workshop.sh setup gpu   # or: setup cpu  (builds the ROS image, downloads the 3.2 GB model once)
+bash scripts/workshop.sh start gpu   # or: start cpu
 ```
 
-Open http://127.0.0.1:8000, wait for **Ready**, then run an instruction.
+Open http://127.0.0.1:8000, wait for **Ready**, then run an instruction such as
+`put the red cube on the yellow tray`.
+
+![Browser UI after a pick and place: live camera, scene list, plan, log and the VLM's boxes](docs/web_ui.jpg)
+
+Measured in GPU mode (RTX 4060 Laptop GPU), one instruction after another from a
+fresh start: red cube on the yellow tray, blue cube stacked on it, blue cube to the
+purple tray, red cube to the purple tray (stacked), green cube on the yellow tray.
+All five succeeded, 25-36 s each (about 8 s of that is VLM calls).
 `bash scripts/workshop.sh gui` opens the Gazebo GUI (X11), `logs` follows output,
 `stop` shuts everything down. Port 8081 (VLM) and 8000 (web) must be free: stop
 the other workshops first. ROS domain defaults to 78.
@@ -57,7 +67,7 @@ listed in `GRASPABLE` in `description.py` (checked by `tests/test_scene.py`).
 ## Tests
 
 ```bash
-python3 -m pytest -q tests   # kinematics, reachability, projection, VLM output parsing
+python3 -m pytest -q tests   # kinematics, reachability, projection, VLM output parsing (rclpy tests need the ROS image)
 ```
 
 ## Known limits

@@ -1,0 +1,35 @@
+// Render: dot -Tsvg docs/architecture.dot -o docs/architecture.svg
+digraph franka {
+  rankdir=LR; bgcolor="white"; nodesep=0.35; ranksep=0.55;
+  node [shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5", fontname="Helvetica", fontsize=11];
+  edge [color="#555555", fontname="Helvetica", fontsize=9];
+
+  browser [label="Browser\nhttp://127.0.0.1:8000\ninstruction, scene, detections", fillcolor="#fff6e0", color="#c08a1e"];
+
+  subgraph cluster_app {
+    label="application container (ROS 2 Jazzy)"; fontname="Helvetica-Bold"; fontsize=11; color="#4a6fa5"; style="rounded"; labelloc="t";
+    node_pp [label="pick_place_node\nFlask: /run, /status, /image.jpg, /detection.jpg"];
+    steps [label="1 scene list  2 parse instruction\n3 ground boxes (colour check)\n4 depth -> 3D (camera pose)", shape=note, fillcolor="#ffffff"];
+    ik [label="kinematics.py\ndamped least-squares IK\nstraight-line descents and lifts"];
+  }
+  subgraph cluster_sim {
+    label="simulation container"; fontname="Helvetica-Bold"; fontsize=11; color="#3b8a5a"; style="rounded"; labelloc="t";
+    gz [label="Gazebo Harmonic\nFranka Panda + tabletop\ncubes, trays, overhead RGB-D", fillcolor="#eaf6ee", color="#3b8a5a"];
+    ctrl [label="ros2_control\narm_controller, gripper_controller\n(follow_joint_trajectory)", fillcolor="#eaf6ee", color="#3b8a5a"];
+    bridge [label="ros_gz_bridge\ncamera, depth, CameraInfo,\njoint states, model poses,\nattach / detach", fillcolor="#eaf6ee", color="#3b8a5a"];
+  }
+  subgraph cluster_inf {
+    label="inference container"; fontname="Helvetica-Bold"; fontsize=11; color="#8a4fa5"; style="rounded"; labelloc="b";
+    ollama [label="Ollama :8081\nqwen2.5vl:3b", fillcolor="#f4ecf8", color="#8a4fa5"];
+  }
+
+  browser -> node_pp [label="HTTP", dir=both];
+  node_pp -> ollama [label="image + prompts\n-> objects, boxes", dir=both];
+  node_pp -> steps [style=dashed, arrowhead=none];
+  node_pp -> ik [dir=both];
+  gz -> bridge [dir=both];
+  bridge -> node_pp [label="RGB-D, joint states"];
+  node_pp -> ctrl [label="FollowJointTrajectory", dir=both];
+  ctrl -> gz [label="joint commands"];
+  node_pp -> bridge [label="attach / detach cube", style=dashed];
+}

@@ -78,13 +78,13 @@ TF on the warehouse map, and Nav2 drives to it.
 
 ```bash
 cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder
-bash scripts/workshop.sh setup cpu      # or: setup gpu
+bash scripts/workshop.sh setup gpu      # or without an NVIDIA GPU: setup cpu
 ```
 
 **Start:**
 
 ```bash
-bash scripts/workshop.sh start cpu      # or: start gpu
+bash scripts/workshop.sh start gpu      # or: start cpu
 ```
 
 **Use:** open http://127.0.0.1:8000 and wait for the status to be ready, idle and
@@ -176,16 +176,15 @@ bash scripts/stop_nav2.sh               # stop Nav2/SLAM, keep Gazebo
 `start_nav2.sh nav2` running, in a third terminal:
 
 ```bash
-bash scripts/start_vlm.sh gpu   # or cpu; reuses the TurtleBot 4 model files
+bash scripts/start_vlm.sh gpu   # or cpu; Ollama on 8081, web UI on 8000
 ```
 
 Open <http://127.0.0.1:8000> and send `patrol`: the Go2 walks a Nav2 route,
 Qwen2.5-VL labels what it sees, and each object is stored as a map waypoint (listed
 in the page and shown as RViz markers on `/vlm_nav/objects`). Then send e.g.
 `go to the green dumpster` and it walks to that waypoint; objects never seen on
-patrol fall back to a live search, and absent objects are refused. Model
-files come from `../turtlebot4_vla_object_finder/models`; download them there
-first if that project has never been set up.
+patrol fall back to a live search, and absent objects are refused. The model
+comes from the shared `vlm-workshop-ollama` volume; the first start downloads it.
 
 **Logs and stop:**
 
@@ -213,13 +212,13 @@ Panda does a top-down pick and place.
 
 ```bash
 cd ~/vlm_packt_workshop/franka_vlm_pick_place
-bash scripts/workshop.sh setup cpu      # or: setup gpu
+bash scripts/workshop.sh setup gpu      # or without an NVIDIA GPU: setup cpu
 ```
 
 **Start:**
 
 ```bash
-bash scripts/workshop.sh start cpu      # or: start gpu
+bash scripts/workshop.sh start gpu      # or: start cpu
 ```
 
 **Use:** open http://127.0.0.1:8000 and wait for **Ready** (about 30 s after the
@@ -264,9 +263,8 @@ at the asset and asks the VLM a concrete question (gauge reading, leak, missing
 extinguisher, open cabinet, blocked exit). Findings go to `/inspection/report`
 and to a Markdown report with images.
 
-**Model files:** Spot reuses the TurtleBot 4 model files and inference
-Dockerfiles. If `turtlebot4_vla_object_finder/models/` is empty, run the
-TurtleBot `setup` step above first.
+**Model:** `start` also runs Ollama with `qwen2.5vl:3b` from the shared
+`vlm-workshop-ollama` volume; the first start downloads it (3.2 GB).
 
 **Build, start and inspect:**
 
