@@ -1,0 +1,66 @@
+# Gazebo + Spot, the web teleop node, and Ollama serving qwen2.5vl:3b from the shared model volume.
+x-ros: &ros
+  image: spot-vlm-teleop:local
+  build: .
+  network_mode: host
+  ipc: host
+  init: true
+  environment: &ros-env
+    ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-92}
+    RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+    FASTDDS_BUILTIN_TRANSPORTS: UDPv4
+
+services:
+  inference:
+    image: ollama/ollama:0.40.10
+    network_mode: host
+    init: true
+    mem_limit: ${INFERENCE_MEMORY:-6g}
+    memswap_limit: ${INFERENCE_MEMORY:-6g}
+    volumes:
+      - ollama:/root/.ollama
+    environment:
+      OLLAMA_HOST: 127.0.0.1:8081
+      OLLAMA_KEEP_ALIVE: '-1'
+      OLLAMA_NUM_PARALLEL: '1'
+      # The default f16 K/V cache made qwen2.5vl on CUDA answer "GGGG..." (Ollama 0.40.10/0.40.11).
+      OLLAMA_FLASH_ATTENTION: '1'
+      OLLAMA_KV_CACHE_TYPE: q8_0
+    # First start pulls the model (3.2 GB) and names it "vlm", the name the code asks for.
+    entrypoint: [/bin/sh, -c]
+    command:
+      - (until ollama list >/dev/null 2>&1; do sleep 1; done;
+         ollama show vlm >/dev/null 2>&1 || { ollama pull qwen2.5vl:3b && ollama cp qwen2.5vl:3b vlm; };
+         ollama run vlm 'Say ok.' >/dev/null) &
+        exec ollama serve
+    healthcheck:
+      test: [CMD-SHELL, ollama ps | grep -q '^vlm']
+      interval: 10s
+      timeout: 5s
+      start_period: 30m
+      retries: 3
+
+  simulation:
+    <<: *ros
+    shm_size: 1gb
+    environment:
+      <<: *ros-env
+      DISPLAY: ${DISPLAY:-:0}
+      XAUTHORITY: /tmp/spot.xauthority
+      QT_QPA_PLATFORM: xcb
+      LIBGL_ALWAYS_SOFTWARE: ${LIBGL_ALWAYS_SOFTWARE:-1}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:ro
+      - ${HOST_XAUTHORITY:-/dev/null}:/tmp/spot.xauthority:ro
+    command: [bash, -lc, 'source /teleop_ws/install/setup.bash && ros2 launch spot_vlm_teleop sim.launch.py']
+
+  web:
+    <<: *ros
+    depends_on:
+      inference:
+        condition: service_healthy
+    command: [bash, -lc, 'source /teleop_ws/install/setup.bash && ros2 run spot_vlm_teleop web_teleop']
+
+volumes:
+  ollama:
+    name: vlm-workshop-ollama  # shared by all workshop projects

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spot VLM Teleop</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f5f7; color: #1d2330; }
+  h1 { font-size: 1.3rem; margin: 0 0 12px; }
+  .grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #fff; border-radius: 10px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  img { width: 100%; border-radius: 6px; background: #222; display: block; }
+  img[hidden] { display: none; }
+  .pad { display: grid; grid-template-columns: repeat(3, 64px); gap: 6px; justify-content: center; margin-top: 12px; }
+  .pad button { height: 52px; font-size: 1.3rem; }
+  button { border: 0; border-radius: 6px; background: #2f6fde; color: #fff; padding: 8px 14px; font-size: 1rem; cursor: pointer; }
+  button:disabled { background: #9aa6bd; cursor: wait; }
+  .pad button.stop { background: #c43d3d; }
+  .row { display: flex; gap: 8px; margin: 8px 0; }
+  input { flex: 1; padding: 8px; font-size: 1rem; border: 1px solid #c5cbd6; border-radius: 6px; }
+  #answer { white-space: pre-wrap; min-height: 2.5em; margin: 8px 0; }
+  .hint { color: #5d6678; font-size: .9rem; }
+  .error { color: #b3261e; }
+</style>
+</head>
+<body>
+<h1>Spot VLM Teleop</h1>
+<div class="grid">
+  <div class="card">
+    <img src="/video" alt="Live camera stream from Spot">
+    <div class="pad" aria-label="Drive controls">
+      <span></span><button data-vx="1" data-wz="0" aria-label="Forward">&uarr;</button><span></span>
+      <button data-vx="0" data-wz="1" aria-label="Turn left">&#8634;</button>
+      <button class="stop" data-vx="0" data-wz="0" aria-label="Stop">&#9632;</button>
+      <button data-vx="0" data-wz="-1" aria-label="Turn right">&#8635;</button>
+      <span></span><button data-vx="-1" data-wz="0" aria-label="Backward">&darr;</button><span></span>
+    </div>
+    <p class="hint">Hold a button, or the arrow / W A S D keys. Spot stops when you let go.
+      Speed <input id="speed" type="range" min="0.1" max="1" step="0.1" value="0.5" style="width:120px; flex:none"></p>
+  </div>
+  <div class="card">
+    <div class="row">
+      <input id="question" placeholder="Ask about the image, e.g. What is in front of you?" maxlength="300">
+      <button id="ask">Ask</button>
+    </div>
+    <div class="row"><button id="detect">Detect objects (draw boxes)</button></div>
+    <div id="answer" class="hint">The answer appears here, under the frame the model saw.</div>
+    <img id="snapshot" alt="Frame sent to the model" hidden>
+  </div>
+</div>
+<script>
+const MAX = 0.6;  // matches MAX_VX / MAX_WZ in web_teleop.py
+let held = null, timer = null;
+
+function send(vx, wz) {
+  const k = parseFloat(document.getElementById('speed').value) * MAX;
+  fetch('/drive', {method: 'POST', headers: {'Content-Type': 'application/json'},
+                   body: JSON.stringify({vx: vx * k, wz: wz * k})});
+}
+function hold(vx, wz) {
+  release();
+  held = [vx, wz];
+  send(vx, wz);
+  timer = setInterval(() => send(...held), 150);  // keeps the 0.5 s dead-man alive
+}
+function release() {
+  if (timer) { clearInterval(timer); timer = null; send(0, 0); }
+  held = null;
+}
+document.querySelectorAll('.pad button').forEach(b => {
+  const vx = +b.dataset.vx, wz = +b.dataset.wz;
+  b.addEventListener('pointerdown', e => { e.preventDefault(); hold(vx, wz); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, release));
+});
+const keys = {ArrowUp: [1, 0], w: [1, 0], ArrowDown: [-1, 0], s: [-1, 0],
+              ArrowLeft: [0, 1], a: [0, 1], ArrowRight: [0, -1], d: [0, -1]};
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.repeat || !keys[e.key]) return;
+  e.preventDefault();
+  hold(...keys[e.key]);
+});
+document.addEventListener('keyup', e => { if (keys[e.key]) release(); });
+window.addEventListener('blur', release);
+
+async function query(path, body) {
+  const buttons = [document.getElementById('ask'), document.getElementById('detect')];
+  const answer = document.getElementById('answer'), snap = document.getElementById('snapshot');
+  buttons.forEach(b => b.disabled = true);
+  answer.className = 'hint';
+  answer.textContent = 'Asking the model...';
+  try {
+    const r = await fetch(path, {method: 'POST', headers: {'Content-Type': 'application/json'},
+                                 body: JSON.stringify(body)});
+    const data = await r.json();
+    if (data.error) throw new Error(data.error);
+    answer.className = '';
+    answer.textContent = data.answer + `\n(${data.seconds} s)`;
+    snap.src = '/snapshot.jpg?' + Date.now();
+    snap.hidden = false;
+  } catch (err) {
+    answer.className = 'error';
+    answer.textContent = err.message;
+  } finally {
+    buttons.forEach(b => b.disabled = false);
+  }
+}
+document.getElementById('ask').onclick = () =>
+  query('/ask', {question: document.getElementById('question').value});
+document.getElementById('question').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('ask').click();
+});
+document.getElementById('detect').onclick = () => query('/detect', {});
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # VLM robotics workshop (Packt)
 
-Four ROS 2 Jazzy + Gazebo Harmonic projects that put vision-language models on
+Five ROS 2 Jazzy + Gazebo Harmonic projects that put vision-language models on
 robots. Each folder is self-contained, with its own Docker setup and a detailed
 README. This page tells you how to run each one on its own.
 
@@ -10,6 +10,7 @@ README. This page tells you how to run each one on its own.
 | [unitree_go2_vlm_navigation](unitree_go2_vlm_navigation/) | Unitree Go2 | Quadruped that patrols a warehouse, marks the objects it sees as map waypoints, and walks to one when asked | Qwen2.5-VL-3B |
 | [franka_vlm_pick_place](franka_vlm_pick_place/) | Franka Panda | Understands a tabletop scene and does pick and place from a text instruction | Qwen2.5-VL-3B |
 | [spot_vlm_industrial_inspection](spot_vlm_industrial_inspection/) | Boston Dynamics Spot | Walks an inspection route and flags faults (gauges, leaks, open cabinet...) | Qwen2.5-VL-3B |
+| [spot_vlm_teleop](spot_vlm_teleop/) | Boston Dynamics Spot | Starter: drive Spot from a web page, stream its camera, ask questions and draw labelled boxes (cv_bridge + Ollama API) | Qwen2.5-VL-3B |
 
 ## Before you start (all projects)
 
@@ -39,7 +40,7 @@ the script.
 
 No ROS or Gazebo installation is needed on the host. Every project runs the
 model, `qwen2.5vl:3b` (about 3.2 GB), in the official Ollama container. The first
-start downloads it into the Docker volume `vlm-workshop-ollama`, which all four
+start downloads it into the Docker volume `vlm-workshop-ollama`, which all
 projects share, so it is downloaded only once.
 
 ## Run one project at a time
@@ -53,6 +54,7 @@ starting another**:
 | Unitree Go2 | 8000 | 8081 | 89 | `bash scripts/go2_sim.sh stop` |
 | Franka Panda | 8000 | 8081 | 78 | `bash scripts/workshop.sh stop` |
 | Spot | – | 8081 | 91 | `bash scripts/spot.sh stop` |
+| Spot web teleop | 8000 | 8081 | 92 | `bash scripts/teleop.sh stop` |
 
 To see what is running and what holds the ports:
 
@@ -300,6 +302,26 @@ The route and per-station questions are in
 
 ---
 
+## 5. Spot — web teleop and VLM questions (starter)
+
+The simplest project and a good first one: drive Spot from a web page, watch its
+camera, ask the VLM about the image, and see labelled boxes drawn with OpenCV.
+One ROS 2 node shows the whole path from camera image through cv_bridge to the
+Ollama chat API and back. It builds on the Spot inspection image above (built
+automatically if missing).
+
+```bash
+cd ~/vlm_packt_workshop/spot_vlm_teleop
+bash scripts/teleop.sh build    # first time
+bash scripts/teleop.sh start    # Gazebo opens, Spot stands
+# open http://127.0.0.1:8000: hold the arrows to drive, Ask a question, or Detect objects
+bash scripts/teleop.sh stop
+```
+
+Add `cpu` without an NVIDIA GPU. See the [project README](spot_vlm_teleop/README.md).
+
+---
+
 ## Switching between projects
 
 ```bash
@@ -308,6 +330,7 @@ cd ~/vlm_packt_workshop/turtlebot4_vla_object_finder && bash scripts/workshop.sh
 cd ~/vlm_packt_workshop/franka_vlm_pick_place        && bash scripts/workshop.sh stop
 cd ~/vlm_packt_workshop/spot_vlm_industrial_inspection && bash scripts/spot.sh stop
 cd ~/vlm_packt_workshop/unitree_go2_vlm_navigation    && bash scripts/go2_sim.sh stop
+cd ~/vlm_packt_workshop/spot_vlm_teleop               && bash scripts/teleop.sh stop
 
 # Confirm nothing is left, then start the next project
 docker ps
