@@ -32,6 +32,24 @@ Choose a distinct ROS domain if other ROS applications run on the host.
 The defaults use domain 77 and UDP DDS transport to avoid cross-container
 shared-memory transport issues. Native ROS clients must use the same settings.
 
+## Tested environment
+
+Verified on 2026-10-25 by running this project from this README in GPU mode.
+Everything except the host rows runs inside Docker, so the host needs no ROS or Gazebo.
+
+| Component | Version |
+|---|---|
+| Host OS | Ubuntu 24.04.4 LTS (kernel 7.0), X11 desktop session |
+| Host hardware | Intel Core i7-13650HX, 23 GB RAM, NVIDIA GeForce RTX 4060 Laptop GPU (8 GB) |
+| NVIDIA | Driver 580.178.04 (CUDA 13.0), NVIDIA Container Toolkit 1.19.1 |
+| Docker | Docker Engine 29.6.2, Docker Compose v5.3.1 |
+| Container OS | Ubuntu 24.04.5 LTS, `ros:jazzy-ros-base` image (`vlm-workshop-ros:local`) |
+| ROS 2 | Jazzy (rclpy 7.1.12), Fast DDS (`rmw_fastrtps_cpp`) over UDP, `ROS_DOMAIN_ID` 77 |
+| Gazebo | Harmonic (Gazebo Sim 8.15.0), ros_gz 1.0.24 |
+| Robot and navigation | TurtleBot 4 Standard description 2.1.1, Nav2 1.3.13, slam_toolbox 2.8.5, gz_ros2_control 1.2.20 |
+| Python | 3.12.3, OpenCV 4.6.0, NumPy 1.26.4, Flask 3.0.2, cv_bridge 4.1.0 |
+| VLM server | Ollama 0.40.10 (`ollama/ollama:0.40.10` image), model `qwen2.5vl:3b` (3.2 GB), port 8081 |
+
 ## First-time Docker setup
 
 ROS 2, Gazebo, Nav2, and inference run in Docker; no host ROS or Gazebo

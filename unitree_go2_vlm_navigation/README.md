@@ -43,6 +43,24 @@ ROS, Gazebo, CHAMP, and simulation dependencies are installed inside the image;
 the host does not need a ROS installation. The upstream checkout is pinned in
 [UPSTREAM.md](UPSTREAM.md).
 
+## Tested environment
+
+Verified on 2026-10-25 by running this project from this README in GPU mode.
+Everything except the host rows runs inside Docker, so the host needs no ROS or Gazebo.
+
+| Component | Version |
+|---|---|
+| Host OS | Ubuntu 24.04.4 LTS (kernel 7.0), X11 desktop session |
+| Host hardware | Intel Core i7-13650HX, 23 GB RAM, NVIDIA GeForce RTX 4060 Laptop GPU (8 GB) |
+| NVIDIA | Driver 580.178.04 (CUDA 13.0), NVIDIA Container Toolkit 1.19.1 |
+| Docker | Docker Engine 29.6.2, Docker Compose v5.3.1 |
+| Container OS | Ubuntu 24.04.4 LTS, `osrf/ros:jazzy-desktop` image (`unitree-go2-sim:jazzy`) |
+| ROS 2 | Jazzy (rclpy 7.1.11), Fast DDS (`rmw_fastrtps_cpp`), `ROS_DOMAIN_ID` 89 |
+| Gazebo | Harmonic (Gazebo Sim 8.15.0), ros_gz 1.0.24 |
+| Robot and navigation | Go2 with the CHAMP gait (upstream commit in [UPSTREAM.md](UPSTREAM.md)), ros2_control 4.48.1, gz_ros2_control 1.2.20, robot_localization 3.8.3, Nav2 1.3.13, slam_toolbox 2.8.5 |
+| Python | 3.12.3, OpenCV 4.6.0, NumPy 1.26.4, Flask 3.0.2, cv_bridge 4.1.0 |
+| VLM server | Ollama 0.40.10 (`ollama/ollama:0.40.10` image), model `qwen2.5vl:3b` (3.2 GB), port 8081 |
+
 ## Build and run
 
 Run from this folder. The first build installs ROS dependencies and compiles the

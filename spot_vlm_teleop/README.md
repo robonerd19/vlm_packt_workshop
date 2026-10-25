@@ -24,6 +24,24 @@ The room has eight objects around Spot's start pose: a green dumpster ahead, a
 red barrel and a blue crate ahead left and right, a desk and a bucket to the left,
 a pallet jack to the right, and a shelf and a box stack behind.
 
+## Tested environment
+
+Verified on 2026-10-25 by running this project from this README in GPU mode.
+Everything except the host rows runs inside Docker, so the host needs no ROS or Gazebo.
+
+| Component | Version |
+|---|---|
+| Host OS | Ubuntu 24.04.4 LTS (kernel 7.0), X11 desktop session |
+| Host hardware | Intel Core i7-13650HX, 23 GB RAM, NVIDIA GeForce RTX 4060 Laptop GPU (8 GB) |
+| NVIDIA | Driver 580.178.04 (CUDA 13.0), NVIDIA Container Toolkit 1.19.1 |
+| Docker | Docker Engine 29.6.2, Docker Compose v5.3.1 |
+| Container OS | Ubuntu 24.04.5 LTS, built `FROM spot-inspection-ros:local` (`ros:jazzy-ros-base`) as `spot-vlm-teleop:local` |
+| ROS 2 | Jazzy (rclpy 7.1.12), Fast DDS (`rmw_fastrtps_cpp`), `ROS_DOMAIN_ID` 92 |
+| Gazebo | Harmonic (Gazebo Sim 8.15.0), ros_gz 1.0.24 |
+| Robot and control | Spot model and CHAMP gait from the Spot inspection image, ros2_control 4.48.1, gz_ros2_control 1.2.20 |
+| Python | 3.12.3, OpenCV 4.6.0, NumPy 1.26.4, Flask 3.0.2, cv_bridge 4.1.0 |
+| VLM server | Ollama 0.40.10 (`ollama/ollama:0.40.10` image), model `qwen2.5vl:3b` (3.2 GB), port 8081 |
+
 ## Run
 
 Requirements, as for the other projects: Ubuntu 24.04 X11 desktop, Docker with
