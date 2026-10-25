@@ -365,6 +365,17 @@ Add `cpu` without an NVIDIA GPU. See the [project README](spot_vlm_teleop/README
 
 ---
 
+## Plain ROS 2 Jazzy container (no robot, no VLM)
+
+[`ros2_jazzy_docker`](ros2_jazzy_docker/README.md) is a basic Jazzy desktop container for your own packages:
+
+```bash
+cd ~/vlm_packt_workshop/ros2_jazzy_docker
+bash scripts/ros2.sh build && bash scripts/ros2.sh start && bash scripts/ros2.sh shell
+```
+
+---
+
 ## Switching between projects
 
 ```bash
